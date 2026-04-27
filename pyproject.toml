@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "Red team security scanning framework for LuCI/OpenWrt web interfaces"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
+license = "AGPL-3.0-or-later"
 authors = [
     {name = "LuCI-RedTeam Contributors"},
 ]
@@ -16,13 +16,14 @@ keywords = ["security", "pentest", "openwrt", "luci", "redteam"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Information Technology",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Security",
 ]
+license-files = ["LICENSE"]
 dependencies = [
     "requests>=2.28.0",
     "click>=8.1.0",

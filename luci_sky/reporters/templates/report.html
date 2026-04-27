@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LuCI-RedTeam Security Report</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; color: #333; }
+  .header { background: #1a1a2e; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+  .header h1 { margin: 0 0 10px 0; font-size: 1.8em; }
+  .summary { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+  .summary-card { background: #fff; border-radius: 8px; padding: 15px 20px; min-width: 100px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  .summary-card .count { font-size: 2em; font-weight: bold; }
+  .summary-card .label { font-size: 0.85em; color: #666; }
+  .critical-color { color: {{ severity_colors.CRITICAL | safe }}; }
+  .high-color { color: {{ severity_colors.HIGH | safe }}; }
+  .medium-color { color: {{ severity_colors.MEDIUM | safe }}; }
+  .low-color { color: {{ severity_colors.LOW | safe }}; }
+  .info-color { color: {{ severity_colors.INFO | safe }}; }
+  .findings { margin-top: 20px; }
+  .finding { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 5px solid #ccc; }
+  .finding.critical { border-left-color: {{ severity_colors.CRITICAL | safe }}; }
+  .finding.high { border-left-color: {{ severity_colors.HIGH | safe }}; }
+  .finding.medium { border-left-color: {{ severity_colors.MEDIUM | safe }}; }
+  .finding.low { border-left-color: {{ severity_colors.LOW | safe }}; }
+  .finding.info { border-left-color: {{ severity_colors.INFO | safe }}; }
+  .finding h3 { margin: 0 0 8px 0; }
+  .finding .meta { font-size: 0.85em; color: #666; margin-bottom: 10px; }
+  .finding .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; color: #fff; margin-right: 8px; }
+  .badge.critical { background: {{ severity_colors.CRITICAL | safe }}; }
+  .badge.high { background: {{ severity_colors.HIGH | safe }}; }
+  .badge.medium { background: {{ severity_colors.MEDIUM | safe }}; }
+  .badge.low { background: {{ severity_colors.LOW | safe }}; }
+  .badge.info { background: {{ severity_colors.INFO | safe }}; }
+  .section-title { font-size: 0.9em; font-weight: bold; color: #555; margin-top: 10px; }
+  .evidence { background: #f8f8f8; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.85em; white-space: pre-wrap; overflow-x: auto; }
+  .remediation { background: #e8f5e9; padding: 10px; border-radius: 4px; margin-top: 8px; }
+  .references a { color: #1976d2; }
+  .footer { text-align: center; color: #999; margin-top: 30px; font-size: 0.85em; }
+  .chart-container { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+  h2 { color: #1a1a2e; border-bottom: 2px solid #e0e0e0; padding-bottom: 8px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>LuCI-RedTeam Security Scan Report</h1>
+  <p>Target: <strong>{{ result.target.url }}</strong></p>
+  <p>Scan Mode: {{ result.scan_mode.value | upper }} &nbsp;|&nbsp;
+     Tool Version: {{ result.tool_version }} &nbsp;|&nbsp;
+     Duration: {{ "%.1f"|format(result.duration_seconds or 0) }}s</p>
+  <p>Started: {{ result.started_at }} &nbsp;|&nbsp; Finished: {{ result.finished_at }}</p>
+</div>
+
+<h2>Executive Summary</h2>
+<div class="summary">
+  <div class="summary-card">
+    <div class="count critical-color">{{ summary.critical }}</div>
+    <div class="label">CRITICAL</div>
+  </div>
+  <div class="summary-card">
+    <div class="count high-color">{{ summary.high }}</div>
+    <div class="label">HIGH</div>
+  </div>
+  <div class="summary-card">
+    <div class="count medium-color">{{ summary.medium }}</div>
+    <div class="label">MEDIUM</div>
+  </div>
+  <div class="summary-card">
+    <div class="count low-color">{{ summary.low }}</div>
+    <div class="label">LOW</div>
+  </div>
+  <div class="summary-card">
+    <div class="count info-color">{{ summary.info }}</div>
+    <div class="label">INFO</div>
+  </div>
+  <div class="summary-card">
+    <div class="count">{{ result.checks_run }}</div>
+    <div class="label">Checks Run</div>
+  </div>
+</div>
+
+<div class="chart-container">
+  <h3>Severity Distribution</h3>
+  <svg width="400" height="80" xmlns="http://www.w3.org/2000/svg">
+    {% set total = summary.critical + summary.high + summary.medium + summary.low + summary.info %}
+    {% if total > 0 %}
+      {% set crit_w = (summary.critical / total * 400) | int %}
+      {% set high_w = (summary.high / total * 400) | int %}
+      {% set med_w = (summary.medium / total * 400) | int %}
+      {% set low_w = (summary.low / total * 400) | int %}
+      {% set info_w = 400 - crit_w - high_w - med_w - low_w %}
+      <rect x="0" y="20" width="{{ crit_w }}" height="30" fill="{{ severity_colors.CRITICAL | safe }}"/>
+      <rect x="{{ crit_w }}" y="20" width="{{ high_w }}" height="30" fill="{{ severity_colors.HIGH | safe }}"/>
+      <rect x="{{ crit_w + high_w }}" y="20" width="{{ med_w }}" height="30" fill="{{ severity_colors.MEDIUM | safe }}"/>
+      <rect x="{{ crit_w + high_w + med_w }}" y="20" width="{{ low_w }}" height="30" fill="{{ severity_colors.LOW | safe }}"/>
+      <rect x="{{ crit_w + high_w + med_w + low_w }}" y="20" width="{{ info_w }}" height="30" fill="{{ severity_colors.INFO | safe }}"/>
+    {% else %}
+      <rect x="0" y="20" width="400" height="30" fill="#e0e0e0"/>
+      <text x="200" y="40" text-anchor="middle" fill="#999" font-size="12">No findings</text>
+    {% endif %}
+  </svg>
+</div>
+
+<h2>Findings ({{ result.findings | length }})</h2>
+<div class="findings">
+{% for finding in result.findings %}
+  <div class="finding {{ finding.severity.value }}">
+    <span class="badge {{ finding.severity.value }}">{{ finding.severity.value | upper }}</span>
+    <h3>{{ finding.title }}</h3>
+    <div class="meta">
+      ID: {{ finding.id }} &nbsp;|&nbsp;
+      CVSS: {{ finding.cvss_score }} &nbsp;|&nbsp;
+      Check: {{ finding.check_id }} &nbsp;|&nbsp;
+      Confidence: {{ finding.confidence.value | upper }}
+      {% if finding.cve_ids %}&nbsp;|&nbsp; CVEs: {{ finding.cve_ids | join(", ") }}{% endif %}
+    </div>
+    <div class="section-title">Description</div>
+    <p>{{ finding.description }}</p>
+    <div class="section-title">Evidence</div>
+    <div class="evidence">{{ finding.evidence }}</div>
+    <div class="section-title">Affected URL</div>
+    <p>{{ finding.affected_url }}</p>
+    <div class="section-title">Remediation</div>
+    <div class="remediation">{{ finding.remediation }}</div>
+    {% if finding.references %}
+    <div class="section-title">References</div>
+    <ul class="references">
+      {% for ref in finding.references %}
+      <li>{{ ref }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+{% else %}
+  <p>No findings detected.</p>
+{% endfor %}
+</div>
+
+<div class="footer">
+  <p>Generated by LuCI-RedTeam v{{ result.tool_version }} &mdash; {{ result.finished_at }}</p>
+  <p><em>This report is for authorized security testing only.</em></p>
+</div>
+</body>
+</html>

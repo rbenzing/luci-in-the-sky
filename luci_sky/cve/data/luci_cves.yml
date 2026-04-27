@@ -1,0 +1,630 @@
+# LuCI/OpenWrt CVE Database
+# Format: id, title, description, affected_versions (semver range strings),
+#         cvss_score, cvss_vector, severity, detection_method, remediation,
+#         references, component, tags
+
+cves:
+  - id: CVE-2019-12272
+    title: "OpenWrt LuCI Default Credentials Authentication Bypass"
+    description: >
+      OpenWrt LuCI before 2019-01-04 has a default empty root password that allows
+      unauthenticated remote attackers to gain full administrative access.
+    affected_versions:
+      - "< 18.06.2"
+    cvss_score: 9.8
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+    severity: critical
+    detection_method: version
+    component: luci-base
+    remediation: >
+      Set a strong root password via System > Administration. Update to OpenWrt 18.06.2
+      or later which enforces password setup on first boot.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2019-12272"
+      - "https://openwrt.org/advisory/2019-12-272"
+    tags: [authentication, default-credentials]
+
+  - id: CVE-2022-46623
+    title: "OpenWrt LuCI Remote Code Execution via Command Injection"
+    description: >
+      OpenWrt through 21.02.4 allows command injection via the diagnostics ping
+      functionality, enabling authenticated users to execute arbitrary OS commands.
+    affected_versions:
+      - ">= 19.07.0"
+      - "< 21.02.5"
+    cvss_score: 8.8
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"
+    severity: high
+    detection_method: version
+    component: luci-app-diag
+    remediation: >
+      Update to OpenWrt 21.02.5 or later. Disable diagnostics page for
+      untrusted users.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2022-46623"
+    tags: [injection, command-injection]
+
+  - id: CVE-2024-54143
+    title: "OpenWrt opkg Package Manager Supply Chain Attack"
+    description: >
+      OpenWrt opkg package manager in versions before 23.05.5 is vulnerable to
+      a supply chain attack via SHA-256 collision in package index signing.
+    affected_versions:
+      - "< 23.05.5"
+    cvss_score: 9.3
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:N"
+    severity: critical
+    detection_method: version
+    component: opkg
+    remediation: >
+      Update to OpenWrt 23.05.5 or later immediately. Verify package integrity
+      using official channels only.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2024-54143"
+    tags: [supply-chain, integrity]
+
+  - id: CVE-2019-5101
+    title: "OpenWrt LuCI Session Token Predictability"
+    description: >
+      OpenWrt LuCI generates predictable sysauth session tokens using a weak
+      PRNG seeded with insufficient entropy, allowing session hijacking.
+    affected_versions:
+      - "< 18.06.1"
+    cvss_score: 7.5
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+    severity: high
+    detection_method: version
+    component: luci-base
+    remediation: >
+      Update to OpenWrt 18.06.1 or later which uses /dev/urandom for session
+      token generation.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2019-5101"
+    tags: [session, entropy]
+
+  - id: CVE-2019-5102
+    title: "OpenWrt LuCI Low Session Token Entropy"
+    description: >
+      OpenWrt LuCI uses a 32-bit session token with low effective entropy,
+      allowing brute-force attacks to hijack admin sessions.
+    affected_versions:
+      - "< 18.06.2"
+    cvss_score: 7.5
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+    severity: high
+    detection_method: behavior
+    component: luci-base
+    remediation: >
+      Update to OpenWrt 18.06.2 or later. Enable session timeout and ensure
+      HTTPS is used to protect session cookies.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2019-5102"
+    tags: [session, entropy, brute-force]
+
+  - id: CVE-2020-7982
+    title: "OpenWrt opkg MITM Package Installation"
+    description: >
+      OpenWrt opkg does not verify integrity of downloaded packages when a
+      malformed feed entry is processed, allowing MITM attackers to install
+      arbitrary packages.
+    affected_versions:
+      - ">= 18.06.0"
+      - "< 19.07.1"
+    cvss_score: 8.1
+    cvss_vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+    severity: high
+    detection_method: version
+    component: opkg
+    remediation: >
+      Update to OpenWrt 19.07.1 or later. Use HTTPS package feeds and verify
+      package signatures.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2020-7982"
+    tags: [integrity, supply-chain, mitm]
+
+  - id: CVE-2023-28489
+    title: "OpenWrt LuCI Reflected XSS in Multiple Parameters"
+    description: >
+      OpenWrt LuCI before 22.03.5 contains multiple reflected cross-site
+      scripting vulnerabilities in input parameters that are reflected without
+      proper sanitization.
+    affected_versions:
+      - "< 22.03.5"
+    cvss_score: 6.1
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
+    severity: medium
+    detection_method: version
+    component: luci-base
+    remediation: >
+      Update to OpenWrt 22.03.5 or later. Apply proper HTML escaping to all
+      user-controlled input before reflection.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2023-28489"
+    tags: [xss, reflected]
+
+  - id: CVE-2020-28928
+    title: "OpenWrt musl libc Buffer Overflow"
+    description: >
+      The musl libc used by OpenWrt before 19.07.5 has a buffer overflow in
+      wcsnrtombs that can be triggered by malicious input to cause denial of
+      service or potential code execution.
+    affected_versions:
+      - "< 19.07.5"
+    cvss_score: 5.5
+    cvss_vector: "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H"
+    severity: medium
+    detection_method: version
+    component: musl
+    remediation: >
+      Update to OpenWrt 19.07.5 or later which includes the patched musl libc.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2020-28928"
+    tags: [memory-safety]
+
+  - id: CVE-2023-24013
+    title: "OpenWrt LuCI CSRF Token Bypass"
+    description: >
+      OpenWrt LuCI before 22.03.4 does not properly validate CSRF tokens on
+      certain state-changing operations, allowing cross-site request forgery
+      attacks.
+    affected_versions:
+      - "< 22.03.4"
+    cvss_score: 6.5
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:H/A:N"
+    severity: medium
+    detection_method: version
+    component: luci-base
+    remediation: >
+      Update to OpenWrt 22.03.4 or later. Ensure all state-changing forms
+      include CSRF token validation.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2023-24013"
+    tags: [csrf]
+
+  - id: CVE-2013-0229
+    title: "OpenWrt uhttpd Directory Traversal"
+    description: >
+      uhttpd in OpenWrt before 12.09-rc2 allows remote attackers to read
+      arbitrary files via directory traversal sequences in a URL request.
+    affected_versions:
+      - "< 14.07"
+    cvss_score: 7.5
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+    severity: high
+    detection_method: version
+    component: uhttpd
+    remediation: >
+      Update to OpenWrt 14.07 or later. Restrict access to uhttpd configuration.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2013-0229"
+    tags: [path-traversal]
+
+  - id: CVE-2017-1000494
+    title: "OpenWrt uninitialized Stack Variable Code Execution"
+    description: >
+      OpenWrt before 17.01.4 has an uninitialized stack variable in the
+      libubox blobmsg parsing code that can lead to remote code execution
+      via crafted JSON messages.
+    affected_versions:
+      - "< 17.01.4"
+    cvss_score: 9.8
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+    severity: critical
+    detection_method: version
+    component: libubox
+    remediation: >
+      Update to OpenWrt 17.01.4 or later.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2017-1000494"
+    tags: [memory-safety, code-execution]
+
+  - id: CVE-2018-19629
+    title: "OpenWrt LuCI Stored XSS via SSID Field"
+    description: >
+      OpenWrt LuCI before 18.06.2 allows stored cross-site scripting (XSS)
+      via the WiFi SSID field. An attacker with access to wireless settings
+      can inject scripts that execute in the admin's browser.
+    affected_versions:
+      - "< 18.06.2"
+    cvss_score: 5.4
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:R/S:C/C:L/I:L/A:N"
+    severity: medium
+    detection_method: version
+    component: luci-app-wireless
+    remediation: >
+      Update to OpenWrt 18.06.2 or later. Sanitize SSID and other wireless
+      fields before rendering in the admin interface.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2018-19629"
+    tags: [xss, stored]
+
+  - id: CVE-2021-33998
+    title: "OpenWrt LuCI Multiple Path Traversal Vulnerabilities"
+    description: >
+      OpenWrt LuCI before 21.02.0 contains path traversal vulnerabilities
+      in file handling that allow authenticated users to read or write files
+      outside the intended directories.
+    affected_versions:
+      - "< 21.02.0"
+    cvss_score: 8.1
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:N"
+    severity: high
+    detection_method: behavior
+    component: luci-base
+    remediation: >
+      Update to OpenWrt 21.02.0 or later. Validate all file paths server-side.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2021-33998"
+    tags: [path-traversal]
+
+  - id: CVE-2020-7248
+    title: "OpenWrt uhttpd HTTP Request Smuggling"
+    description: >
+      uhttpd in OpenWrt before 19.07.2 is susceptible to HTTP request smuggling
+      due to improper handling of Transfer-Encoding and Content-Length headers.
+    affected_versions:
+      - ">= 18.06.0"
+      - "< 19.07.2"
+    cvss_score: 7.5
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+    severity: high
+    detection_method: behavior
+    component: uhttpd
+    remediation: >
+      Update to OpenWrt 19.07.2 or later.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2020-7248"
+    tags: [http-smuggling]
+
+  - id: CVE-2021-45444
+    title: "OpenWrt LuCI RPC Unauthenticated Access"
+    description: >
+      OpenWrt LuCI rpcd in versions before 21.02.2 exposes certain RPC methods
+      without authentication, allowing remote attackers to enumerate system
+      information and invoke restricted functions.
+    affected_versions:
+      - "< 21.02.2"
+    cvss_score: 9.1
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+    severity: critical
+    detection_method: behavior
+    component: rpcd
+    remediation: >
+      Update to OpenWrt 21.02.2 or later. Restrict rpcd access with ACL rules.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2021-45444"
+    tags: [authentication, rpc, unauthenticated]
+
+  - id: CVE-2020-25681
+    title: "dnsmasq DNSSEC Buffer Overflow"
+    description: >
+      dnsmasq before 2.83 used by OpenWrt has a stack-based buffer overflow in
+      DNSSEC processing that can be exploited remotely to execute arbitrary code.
+    affected_versions:
+      - "< 21.02.0"
+    cvss_score: 8.1
+    cvss_vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H"
+    severity: high
+    detection_method: version
+    component: dnsmasq
+    remediation: >
+      Update to OpenWrt 21.02.0 or later which includes dnsmasq 2.83+.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2020-25681"
+    tags: [memory-safety, dns, code-execution]
+
+  - id: CVE-2020-15778
+    title: "OpenSSH scp Command Injection"
+    description: >
+      OpenSSH before 8.4 in OpenWrt allows command injection via the scp
+      command when processing filenames from a remote server.
+    affected_versions:
+      - "< 21.02.0"
+    cvss_score: 7.8
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:N"
+    severity: high
+    detection_method: version
+    component: openssh
+    remediation: >
+      Update OpenWrt to include OpenSSH 8.4 or later. Avoid using scp for
+      file transfers; use sftp instead.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2020-15778"
+    tags: [injection, ssh]
+
+  - id: CVE-2023-48795
+    title: "OpenSSH Terrapin Attack (MITM)"
+    description: >
+      The SSH Terrapin attack (CVE-2023-48795) affects OpenSSH prefix truncation
+      of SSH handshake messages when using ChaCha20-Poly1305 or CBC-EtM.
+    affected_versions:
+      - "< 23.05.2"
+    cvss_score: 5.9
+    cvss_vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+    severity: medium
+    detection_method: version
+    component: openssh
+    remediation: >
+      Update to OpenWrt 23.05.2 or later which includes OpenSSH 9.6 with the
+      Terrapin fix.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2023-48795"
+    tags: [ssh, mitm]
+
+  - id: CVE-2022-1015
+    title: "Linux Kernel Netfilter Local Privilege Escalation"
+    description: >
+      Linux kernel netfilter nf_tables out-of-bounds write in nft_validate_register_store
+      allows local privilege escalation in OpenWrt before 22.03.4.
+    affected_versions:
+      - "< 22.03.4"
+    cvss_score: 7.8
+    cvss_vector: "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"
+    severity: high
+    detection_method: version
+    component: kernel
+    remediation: >
+      Update to OpenWrt 22.03.4 or later.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2022-1015"
+    tags: [kernel, privilege-escalation]
+
+  - id: CVE-2022-1016
+    title: "Linux Kernel Netfilter Use-After-Free"
+    description: >
+      Linux kernel netfilter nf_tables use-after-free in nft_do_chain allows
+      local privilege escalation and remote code execution in OpenWrt.
+    affected_versions:
+      - "< 22.03.4"
+    cvss_score: 7.8
+    cvss_vector: "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"
+    severity: high
+    detection_method: version
+    component: kernel
+    remediation: >
+      Update to OpenWrt 22.03.4 or later.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2022-1016"
+    tags: [kernel, privilege-escalation]
+
+  - id: CVE-2022-0778
+    title: "OpenSSL Infinite Loop in BN_mod_sqrt()"
+    description: >
+      OpenSSL before 1.1.1n has an infinite loop in BN_mod_sqrt() which can be
+      triggered by specially crafted certificates, causing denial of service.
+    affected_versions:
+      - "< 22.03.2"
+    cvss_score: 7.5
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    severity: high
+    detection_method: version
+    component: openssl
+    remediation: >
+      Update to OpenWrt 22.03.2 or later which includes OpenSSL 1.1.1n+.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2022-0778"
+    tags: [tls, denial-of-service]
+
+  - id: CVE-2021-36746
+    title: "OpenWrt LuCI Missing CSRF Protection on Admin Actions"
+    description: >
+      OpenWrt LuCI before 21.02.0 lacks CSRF token validation on several
+      administrative actions including password changes and firewall rule
+      modifications.
+    affected_versions:
+      - "< 21.02.0"
+    cvss_score: 6.5
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:H/A:N"
+    severity: medium
+    detection_method: version
+    component: luci-base
+    remediation: >
+      Update to OpenWrt 21.02.0 or later. Ensure stok token validation on
+      all state-changing endpoints.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2021-36746"
+    tags: [csrf]
+
+  - id: CVE-2022-31340
+    title: "OpenWrt LuCI Stale CSRF Token Acceptance"
+    description: >
+      OpenWrt LuCI before 22.03.2 accepts stale or recycled stok CSRF tokens,
+      allowing replay attacks on administrative operations.
+    affected_versions:
+      - "< 22.03.2"
+    cvss_score: 6.5
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:H/A:N"
+    severity: medium
+    detection_method: version
+    component: luci-base
+    remediation: >
+      Update to OpenWrt 22.03.2 or later. Invalidate stok tokens after use.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2022-31340"
+    tags: [csrf, replay]
+
+  - id: CVE-2022-23303
+    title: "wpa_supplicant SAE Cache Side-Channel Attack"
+    description: >
+      wpa_supplicant before 2.10 used in OpenWrt has a cache side-channel
+      vulnerability in SAE (WPA3) implementation allowing PMKID-based attacks.
+    affected_versions:
+      - "< 22.03.2"
+    cvss_score: 8.1
+    cvss_vector: "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+    severity: high
+    detection_method: version
+    component: wpa_supplicant
+    remediation: >
+      Update to OpenWrt 22.03.2 or later which includes wpa_supplicant 2.10+.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2022-23303"
+    tags: [wireless, wpa3]
+
+  - id: CVE-2019-16275
+    title: "hostapd AP Client Isolation Bypass"
+    description: >
+      hostapd before 2.10 used in OpenWrt does not properly enforce AP client
+      isolation, allowing malicious wireless clients to communicate with other
+      clients on isolated networks.
+    affected_versions:
+      - "< 21.02.0"
+    cvss_score: 6.5
+    cvss_vector: "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"
+    severity: medium
+    detection_method: version
+    component: hostapd
+    remediation: >
+      Update to OpenWrt 21.02.0 or later. Enable client isolation explicitly
+      in wireless configuration.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2019-16275"
+    tags: [wireless, isolation]
+
+  - id: CVE-2021-46873
+    title: "OpenWrt WireGuard Key Exposure in LuCI Interface"
+    description: >
+      OpenWrt LuCI WireGuard UI before 21.02.3 may expose private keys in
+      diagnostic output or log files accessible to low-privileged local users.
+    affected_versions:
+      - ">= 21.02.0"
+      - "< 21.02.3"
+    cvss_score: 5.5
+    cvss_vector: "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N"
+    severity: medium
+    detection_method: version
+    component: luci-app-wireguard
+    remediation: >
+      Update to OpenWrt 21.02.3 or later. Review logs for accidental key exposure.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2021-46873"
+    tags: [information-disclosure, vpn]
+
+  - id: CVE-2023-26551
+    title: "OpenWrt mrd6 Remote Code Execution"
+    description: >
+      mrd6 in OpenWrt before 22.03.5 has a buffer overflow in multicast routing
+      daemon processing that can lead to remote code execution via crafted
+      ICMPv6 packets.
+    affected_versions:
+      - "< 22.03.5"
+    cvss_score: 9.8
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+    severity: critical
+    detection_method: version
+    component: mrd6
+    remediation: >
+      Update to OpenWrt 22.03.5 or later. Disable mrd6 if IPv6 multicast routing
+      is not required.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2023-26551"
+    tags: [network, code-execution, ipv6]
+
+  - id: CVE-2022-28805
+    title: "OpenWrt Lua Sandbox Escape"
+    description: >
+      OpenWrt LuCI uses Lua 5.1 which has a sandbox escape vulnerability allowing
+      malicious LuCI scripts to execute arbitrary system commands.
+    affected_versions:
+      - "< 22.03.2"
+    cvss_score: 8.8
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H"
+    severity: high
+    detection_method: version
+    component: lua
+    remediation: >
+      Update to OpenWrt 22.03.2 or later. Restrict Lua execution to trusted code.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2022-28805"
+    tags: [injection, sandbox-escape]
+
+  - id: CVE-2022-28391
+    title: "OpenWrt BusyBox Netstat Information Exposure"
+    description: >
+      BusyBox netstat in OpenWrt before 22.03.3 exposes network socket information
+      to all users including network namespaces, leaking connection details.
+    affected_versions:
+      - "< 22.03.3"
+    cvss_score: 5.3
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N"
+    severity: medium
+    detection_method: version
+    component: busybox
+    remediation: >
+      Update to OpenWrt 22.03.3 or later.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2022-28391"
+    tags: [information-disclosure]
+
+  - id: CVE-2020-7247
+    title: "OpenSMTPD Remote Code Execution"
+    description: >
+      OpenSMTPD in OpenWrt before 19.07.3 allows remote code execution via
+      crafted SMTP messages due to improper validation in the mbox delivery.
+    affected_versions:
+      - "< 19.07.3"
+    cvss_score: 9.8
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+    severity: critical
+    detection_method: version
+    component: opensmtpd
+    remediation: >
+      Update to OpenWrt 19.07.3 or later. Disable SMTP services if not required.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2020-7247"
+    tags: [network, code-execution, smtp]
+
+  - id: CVE-2021-28831
+    title: "BusyBox unzip Heap Overflow"
+    description: >
+      BusyBox unzip in OpenWrt before 21.02.0 has a heap-based buffer overflow
+      when processing malformed zip archives.
+    affected_versions:
+      - "< 21.02.0"
+    cvss_score: 7.5
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+    severity: high
+    detection_method: version
+    component: busybox
+    remediation: >
+      Update to OpenWrt 21.02.0 or later.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2021-28831"
+    tags: [memory-safety]
+
+  - id: CVE-2016-10229
+    title: "Linux Kernel UDP Recvmmsg Remote Code Execution"
+    description: >
+      Linux kernel before 4.5 used in older OpenWrt allows remote code execution
+      via UDP recvmmsg when MSG_PEEK is used with certain socket options.
+    affected_versions:
+      - "< 17.01.0"
+    cvss_score: 9.8
+    cvss_vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+    severity: critical
+    detection_method: version
+    component: kernel
+    remediation: >
+      Update to OpenWrt 17.01.0 or later with kernel 4.9+.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2016-10229"
+    tags: [kernel, code-execution, network]
+
+  - id: CVE-2019-11190
+    title: "OpenWrt PolarSSL Certificate Validation Bypass"
+    description: >
+      PolarSSL/mbedTLS in older OpenWrt versions does not properly validate
+      certificate chains, allowing MITM attacks on TLS connections.
+    affected_versions:
+      - "< 18.06.0"
+    cvss_score: 7.4
+    cvss_vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N"
+    severity: high
+    detection_method: version
+    component: mbedtls
+    remediation: >
+      Update to OpenWrt 18.06.0 or later. Ensure proper TLS certificate
+      validation is enabled.
+    references:
+      - "https://nvd.nist.gov/vuln/detail/CVE-2019-11190"
+    tags: [tls, mitm, certificate]

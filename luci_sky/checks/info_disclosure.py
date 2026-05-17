@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List
+from typing import List, Optional
 
 from luci_sky.checks.base import Check
 from luci_sky.checks import register
@@ -17,6 +17,12 @@ from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, T
 
 _VERSION_REGEX = re.compile(
     r"OpenWrt\s+(\d{2}\.\d{2}(?:\.\d+)?(?:-rc\d+)?)",
+    re.IGNORECASE,
+)
+# Header-based version patterns: "Server: uhttpd" + "X-OpenWrt-Version: 23.05.3"
+# or version embedded in Server header like "OpenWrt/23.05.3"
+_SERVER_VERSION_REGEX = re.compile(
+    r"(?:OpenWrt/|OpenWrt\s+)(\d{2}\.\d{2}(?:\.\d+)?(?:-rc\d+)?)",
     re.IGNORECASE,
 )
 
@@ -106,18 +112,41 @@ class VersionDetection(Check):
             try:
                 resp = session.get(url)
                 text = resp.text or ""
+
+                version: Optional[str] = None
+                evidence_source: str = ""
+
+                # 1. Check response body
                 m = _VERSION_REGEX.search(text)
                 if m:
                     version = m.group(1)
+                    evidence_source = f"response body from {url}"
+
+                # 2. Check X-OpenWrt-Version header
+                if version is None:
+                    header_val = resp.headers.get("X-OpenWrt-Version", "")
+                    if header_val:
+                        version = header_val.strip()
+                        evidence_source = f"X-OpenWrt-Version header from {url}"
+
+                # 3. Check Server header for embedded version
+                if version is None:
+                    server_hdr = resp.headers.get("Server", "")
+                    m2 = _SERVER_VERSION_REGEX.search(server_hdr)
+                    if m2:
+                        version = m2.group(1)
+                        evidence_source = f"Server header from {url}: '{server_hdr}'"
+
+                if version:
                     target.detected_version = version
                     findings.append(self._make_finding(
                         title=f"OpenWrt version detected: {version}",
                         description=(
                             f"The OpenWrt firmware version {version} was detected in the "
-                            "HTTP response body. Version information helps attackers identify "
+                            "HTTP response. Version information helps attackers identify "
                             "applicable CVEs."
                         ),
-                        evidence=f"Regex match in response from {url}: 'OpenWrt {version}'",
+                        evidence=f"Version '{version}' found in {evidence_source}",
                         affected_url=url,
                         remediation=(
                             "Consider hiding version information from unauthenticated responses. "

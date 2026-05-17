@@ -95,7 +95,12 @@ class CVEDatabase:
         Results are sorted by cvss_score descending.
         """
         if target_version is None:
-            matched = [e for e in self._entries if e.detection_method in ("behavior", "both")]
+            # Without a detected version, only return behavior/both entries that have
+            # no affected_versions constraints (i.e. truly apply to all versions).
+            matched = [
+                e for e in self._entries
+                if e.detection_method in ("behavior", "both") and not e.affected_versions
+            ]
             return sorted(matched, key=lambda e: e.cvss_score, reverse=True)
 
         try:
@@ -106,9 +111,6 @@ class CVEDatabase:
 
         matched = []
         for entry in self._entries:
-            if entry.detection_method == "behavior":
-                matched.append(entry)
-                continue
             if self._version_matches(parsed_version, entry.affected_versions):
                 matched.append(entry)
 

@@ -1,4 +1,4 @@
-# LuCI-RedTeam
+# LuCI-Sky RedTeam Framework
 
 ![License: AGPL v3+](https://img.shields.io/badge/license-AGPLv3%2B-blue.svg)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-3776AB.svg?logo=python&logoColor=white)

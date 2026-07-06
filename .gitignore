@@ -156,3 +156,6 @@ pentest_results.json
 #ai
 .claude/
 .claudeignore
+
+# superpowers subagent-driven-development scratch
+.superpowers/

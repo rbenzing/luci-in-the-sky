@@ -5,13 +5,13 @@ All check plugins subclass Check and implement run().
 """
 from __future__ import annotations
 
-import re
-from abc import ABCMeta, ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from datetime import datetime
 from typing import ClassVar, List, Optional
 
 from luci_sky.config import Config
 from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.sanitize import sanitize as _shared_sanitize
 
 
 class _CheckMeta(ABCMeta):
@@ -94,33 +94,5 @@ class Check(metaclass=_CheckMeta):
 
     @staticmethod
     def _sanitize(text: str, max_len: int = 2000) -> str:
-        """
-        Mask sensitive values in evidence strings:
-        - sysauth / sysauth_https cookie values (keep first 8 chars)
-        - luci_password= / password= field values
-        - Authorization header token values
-        Then truncate to max_len.
-        """
-        # Mask sysauth cookie values: keep first 8 chars then ***
-        text = re.sub(
-            r"(sysauth(?:_\w+)?=)([A-Za-z0-9]{8})([A-Za-z0-9]+)",
-            r"\1\2***",
-            text,
-        )
-
-        # Mask password fields (case-insensitive) — luci_password= or PASSWORD=
-        text = re.sub(
-            r"(?i)((?:luci_)?password=)[^\s&\"']+",
-            r"\1***",
-            text,
-        )
-
-        # Mask Authorization header token values (Bearer, Basic, etc.)
-        text = re.sub(
-            r"(Authorization:\s*\w+\s+)\S+",
-            r"\1***",
-            text,
-            flags=re.IGNORECASE,
-        )
-
-        return text[:max_len]
+        """Delegate to the shared sanitizer (kept as a method for existing callers)."""
+        return _shared_sanitize(text, max_len=max_len)

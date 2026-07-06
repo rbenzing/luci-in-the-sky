@@ -128,6 +128,7 @@ class Finding:
     remediation: str
     references: List[str] = field(default_factory=list)
     cve_ids: List[str] = field(default_factory=list)
+    contributing_checks: List[str] = field(default_factory=list)
     scan_mode: ScanMode = ScanMode.PASSIVE
     timestamp: Optional[datetime] = field(default_factory=datetime.utcnow)
     raw_response: Optional[str] = None
@@ -148,6 +149,7 @@ class Finding:
             "remediation": self.remediation,
             "references": list(self.references),
             "cve_ids": list(self.cve_ids),
+            "contributing_checks": list(self.contributing_checks),
             "scan_mode": self.scan_mode.value,
             "timestamp": self.timestamp.isoformat() if self.timestamp else None,
             "raw_response": self.raw_response,

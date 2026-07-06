@@ -320,6 +320,7 @@ def _build_result_from_dict(data: dict):
                 remediation=f.get("remediation", ""),
                 references=f.get("references", []),
                 cve_ids=f.get("cve_ids", []),
+                contributing_checks=f.get("contributing_checks", []),
                 scan_mode=ScanMode(f.get("scan_mode", "passive")),
                 timestamp=datetime.fromisoformat(f["timestamp"]) if f.get("timestamp") else datetime.utcnow(),
             ))

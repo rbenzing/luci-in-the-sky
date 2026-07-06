@@ -285,6 +285,26 @@ class TestScanResultMethods:
 # ---------------------------------------------------------------------------
 
 
+def _minimal_finding(**kw):
+    base = dict(
+        id="LUCI-X-001", check_id="c", title="t", severity=Severity.LOW,
+        cvss_score=1.0, cvss_vector="v", category=Category.CONFIGURATION,
+        confidence=Confidence.LOW, description="d", evidence="e",
+        affected_url="u", remediation="r",
+    )
+    base.update(kw)
+    return Finding(**base)
+
+
+def test_finding_contributing_checks_defaults_empty():
+    assert _minimal_finding().contributing_checks == []
+
+
+def test_finding_to_dict_includes_contributing_checks():
+    f = _minimal_finding(contributing_checks=["a", "b"])
+    assert f.to_dict()["contributing_checks"] == ["a", "b"]
+
+
 class TestTargetToDict:
     def test_target_to_dict_round_trips(self):
         """Target.to_dict() must serialize all fields to the correct Python types."""

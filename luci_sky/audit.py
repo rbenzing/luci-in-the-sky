@@ -42,6 +42,8 @@ class AuditLogger:
             rec["resp_body"] = sanitize(resp_body, max_len=4000)
         line = json.dumps(rec, default=str)
         with self._lock:
+            if self._fh is None:
+                return
             self._fh.write(line + "\n")
             self._fh.flush()
 

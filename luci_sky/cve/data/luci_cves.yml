@@ -3,6 +3,10 @@
 #         cvss_score, cvss_vector, severity, detection_method, remediation,
 #         references, component, tags
 
+version: 1
+updated: "2026-07-06"
+source: "https://raw.githubusercontent.com/rbenzing/luci-in-the-sky/main/luci_sky/cve/data/luci_cves.yml"
+
 cves:
   - id: CVE-2019-12272
     title: "OpenWrt LuCI Default Credentials Authentication Bypass"

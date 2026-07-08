@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 from typing import ClassVar, List, Optional
 
 import yaml
 from packaging.version import Version, InvalidVersion
+
+from luci_sky.cve import storage
 
 logger = logging.getLogger(__name__)
 
@@ -51,14 +54,25 @@ class CVEDatabase:
     def __init__(self) -> None:
         if not CVEDatabase._loaded:
             self._entries: List[CVEEntry] = []
+            self.db_version: Optional[int] = None
+            self.updated: Optional[str] = None
+            self.source: Optional[str] = None
             self._load()
             CVEDatabase._loaded = True
+
+    @staticmethod
+    def _resolve_db_path() -> Path:
+        user = storage.user_db_path()
+        return user if user.exists() else _DB_PATH
 
     def _load(self) -> None:
         """Load and parse luci_cves.yml."""
         try:
-            with open(_DB_PATH, "r", encoding="utf-8") as fh:
+            with open(self._resolve_db_path(), "r", encoding="utf-8") as fh:
                 data = yaml.safe_load(fh) or {}
+            self.db_version = data.get("version")
+            self.updated = data.get("updated")
+            self.source = data.get("source")
             raw_cves = data.get("cves", [])
             for raw in raw_cves:
                 try:
@@ -82,6 +96,24 @@ class CVEDatabase:
         except Exception as exc:
             logger.error("Failed to load CVE database: %s", exc)
             self._entries = []
+
+    def age_days(self) -> Optional[int]:
+        if not self.updated:
+            return None
+        try:
+            y, m, d = (int(x) for x in str(self.updated).split("-"))
+            return (date.today() - date(y, m, d)).days
+        except Exception:
+            return None
+
+    def is_stale(self, max_age_days: int = 90) -> bool:
+        age = self.age_days()
+        return age is not None and age > max_age_days
+
+    @classmethod
+    def reset(cls) -> None:
+        cls._instance = None
+        cls._loaded = False
 
     def match(self, target_version: Optional[str]) -> List[CVEEntry]:
         """

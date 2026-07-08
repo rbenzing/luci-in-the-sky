@@ -14,7 +14,7 @@ import click
 
 import luci_sky
 from luci_sky.config import Config
-from luci_sky.models import ScanMode, Severity
+from luci_sky.models import ScanMode
 from luci_sky.reporters.terminal import TerminalReporter
 from luci_sky.scanner import Scanner
 
@@ -42,18 +42,18 @@ def cli() -> None:
 
 @cli.command("scan")
 @click.argument("target_url")
-@click.option("--mode", default="passive", show_default=True,
+@click.option("--mode", default=None,
               type=click.Choice(["passive", "active", "full"], case_sensitive=False),
-              help="Scan mode.")
-@click.option("--format", "output_format", default="terminal", show_default=True,
+              help="Scan mode (default: passive).")
+@click.option("--format", "output_format", default=None,
               help="Output format: terminal, json, html, all.")
 @click.option("--output", "-o", default=None, help="Output file path.")
 @click.option("--username", default=None, envvar="LUCI_USERNAME", help="LuCI username.")
 @click.option("--password", default=None, envvar="LUCI_PASSWORD", help="LuCI password.")
 @click.option("--token", default=None, envvar="LUCI_SESSION_TOKEN", help="Session token.")
-@click.option("--threads", default=5, show_default=True, help="Number of worker threads.")
-@click.option("--timeout", default=10.0, show_default=True, help="Request timeout in seconds.")
-@click.option("--severity", "severity_threshold", default="info", show_default=True,
+@click.option("--threads", default=None, type=int, help="Number of worker threads.")
+@click.option("--timeout", default=None, type=float, help="Request timeout in seconds.")
+@click.option("--severity", "severity_threshold", default=None,
               type=click.Choice(["critical", "high", "medium", "low", "info"],
                                 case_sensitive=False),
               help="Minimum severity threshold to report.")
@@ -67,55 +67,89 @@ def cli() -> None:
               help="Canary domain for out-of-band detection.")
 @click.option("--no-verify-tls", "no_verify_tls", is_flag=True, default=False,
               help="Disable TLS certificate verification (use with self-signed certs).")
+@click.option("--config", "config_path", default=None, type=click.Path(),
+              help="Path to a YAML config file.")
+@click.option("--delay-ms", "delay_ms", default=None, type=int, help="Per-request delay (ms).")
+@click.option("--jitter-ms", "jitter_ms", default=None, type=int,
+              help="Random jitter added to delay (ms).")
+@click.option("--include", "include", multiple=True, help="Only run these check IDs (repeatable).")
+@click.option("--exclude", "exclude", multiple=True, help="Skip these check IDs (repeatable).")
+@click.option("--ca-bundle", "ca_bundle", default=None, type=click.Path(),
+              help="CA bundle path for TLS verify.")
+@click.option("--extra-cred", "extra_cred", multiple=True,
+              help="Extra USER:PASS to try (repeatable).")
 def scan(
     target_url: str,
-    mode: str,
-    output_format: str,
+    mode: Optional[str],
+    output_format: Optional[str],
     output: Optional[str],
     username: Optional[str],
     password: Optional[str],
     token: Optional[str],
-    threads: int,
-    timeout: float,
-    severity_threshold: str,
+    threads: Optional[int],
+    timeout: Optional[float],
+    severity_threshold: Optional[str],
     confirm: bool,
     quiet: bool,
     no_color: bool,
     proxy: Optional[str],
     canary_domain: Optional[str],
     no_verify_tls: bool,
+    config_path: Optional[str],
+    delay_ms: Optional[int],
+    jitter_ms: Optional[int],
+    include: tuple,
+    exclude: tuple,
+    ca_bundle: Optional[str],
+    extra_cred: tuple,
 ) -> None:
     """Run a security scan against TARGET_URL."""
+    extra_credentials = []
+    for pair in extra_cred:
+        user, _, pw = pair.partition(":")
+        extra_credentials.append((user, pw))
+
+    overrides = {
+        "target_url": target_url,
+        "mode": mode,
+        "threads": threads,
+        "timeout": timeout,
+        "format": output_format,
+        "output_path": output,
+        "username": username,
+        "password": password,
+        "session_token": token,
+        "severity_threshold": severity_threshold,
+        "proxy": proxy,
+        "canary_domain": canary_domain,
+        "delay_ms": delay_ms,
+        "jitter_ms": jitter_ms,
+        "include_checks": list(include) or None,
+        "exclude_checks": list(exclude) or None,
+        "ca_bundle": ca_bundle,
+        "extra_credentials": extra_credentials or None,
+    }
+    cfg = Config.build(Path(config_path) if config_path else None, overrides)
+    if no_color:
+        cfg.no_color = True
+    if quiet:
+        cfg.quiet = True
+    if no_verify_tls:
+        cfg.verify_tls = False
+    cfg.confirm = confirm
+    scan_mode = cfg.mode
+
     # Show disclaimer
-    if not quiet:
+    if not cfg.quiet:
         click.echo(_DISCLAIMER)
         click.echo()
 
     # Confirmation gate for active/full modes
-    scan_mode = ScanMode(mode.lower())
-    if scan_mode in (ScanMode.ACTIVE, ScanMode.FULL) and not confirm:
+    if scan_mode in (ScanMode.ACTIVE, ScanMode.FULL) and not cfg.confirm:
         click.echo(_ACTIVE_CONFIRM_MSG)
         if not click.confirm("Do you wish to proceed?"):
             click.echo("Scan aborted.")
             sys.exit(0)
-
-    # Build config
-    cfg = Config()
-    cfg.target_url = target_url
-    cfg.mode = scan_mode
-    cfg.threads = threads
-    cfg.timeout = timeout
-    cfg.format = output_format
-    cfg.output_path = Path(output) if output else None
-    cfg.username = username
-    cfg.password = password
-    cfg.session_token = token
-    cfg.severity_threshold = Severity(severity_threshold.lower())
-    cfg.no_color = no_color
-    cfg.proxy = proxy
-    cfg.canary_domain = canary_domain
-    if no_verify_tls:
-        cfg.verify_tls = False
 
     # Run scan
     scanner = Scanner(cfg)
@@ -127,7 +161,7 @@ def scan(
 
     # Render reports
     from luci_sky.reporters import get_reporters
-    reporter_classes = get_reporters(output_format)
+    reporter_classes = get_reporters(cfg.format)
     for reporter_cls in reporter_classes:
         reporter = reporter_cls(cfg)
         reporter.render(result, output_path=cfg.output_path)
@@ -203,6 +237,8 @@ def list_checks(output_format: str, mode: Optional[str]) -> None:
 @click.option("--format", "output_format", default="terminal", show_default=True)
 @click.option("--confirm", is_flag=True, default=False)
 @click.option("--no-color", is_flag=True, default=False)
+@click.option("--config", "config_path", default=None, type=click.Path(),
+              help="Path to a YAML config file.")
 def check_command(
     check_id: str,
     target_url: str,
@@ -211,15 +247,19 @@ def check_command(
     output_format: str,
     confirm: bool,
     no_color: bool,
+    config_path: Optional[str],
 ) -> None:
     """Run a single check by CHECK_ID against TARGET_URL."""
-    cfg = Config()
-    cfg.target_url = target_url
-    cfg.mode = ScanMode(mode.lower())
-    cfg.output_path = Path(output) if output else None
-    cfg.format = output_format
-    cfg.no_color = no_color
-    cfg.include_checks = [check_id]
+    overrides = {
+        "target_url": target_url,
+        "mode": mode,
+        "format": output_format,
+        "output_path": output,
+        "include_checks": [check_id],
+    }
+    cfg = Config.build(Path(config_path) if config_path else None, overrides)
+    if no_color:
+        cfg.no_color = True
 
     scanner = Scanner(cfg)
     try:

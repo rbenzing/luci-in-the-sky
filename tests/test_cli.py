@@ -326,3 +326,38 @@ class TestCliReportCommand:
             )
 
         assert result.exit_code == 0
+
+
+# ---------------------------------------------------------------------------
+# scan command — Config.build precedence and new flags (Task 6)
+# ---------------------------------------------------------------------------
+
+
+def test_scan_accepts_new_flags():
+    runner = CliRunner()
+    with patch("luci_sky.cli.Scanner") as M:
+        M.return_value.run.return_value = _make_empty_result()
+        result = runner.invoke(cli, [
+            "scan", "https://192.168.1.1", "--mode", "passive", "--confirm",
+            "--delay-ms", "50", "--jitter-ms", "10",
+            "--include", "tls_analysis", "--exclude", "port_scan",
+            "--extra-cred", "root:toor",
+        ], catch_exceptions=False)
+    assert result.exit_code == 0, result.output
+
+
+def test_scan_config_flag_sets_mode(tmp_path):
+    cf = tmp_path / "c.yml"
+    cf.write_text("severity_threshold: critical\n")
+    runner = CliRunner()
+    captured = {}
+    with patch("luci_sky.cli.Scanner") as M:
+        def _capture(cfg, *a, **k):
+            captured["cfg"] = cfg
+            M.return_value.run.return_value = _make_empty_result()
+            return M.return_value
+        M.side_effect = _capture
+        runner.invoke(cli, ["scan", "https://192.168.1.1", "--config", str(cf), "--confirm"],
+                      catch_exceptions=False)
+    from luci_sky.models import Severity
+    assert captured["cfg"].severity_threshold == Severity.CRITICAL

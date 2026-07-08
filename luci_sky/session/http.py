@@ -103,7 +103,10 @@ class SessionManager:
     def _request(self, method: str, url: str, **kwargs: Any) -> requests.Response:
         self._throttle()
         kwargs.setdefault("timeout", self._config.timeout)
-        kwargs.setdefault("verify", self._config.verify_tls)
+        if self._config.verify_tls and self._config.ca_bundle:
+            kwargs.setdefault("verify", str(self._config.ca_bundle))
+        else:
+            kwargs.setdefault("verify", self._config.verify_tls)
         logger.debug("%s %s", method, url)
         return self._session.request(method, url, **kwargs)
 

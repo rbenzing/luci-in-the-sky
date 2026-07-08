@@ -65,6 +65,15 @@ class Config:
     no_color: bool = False
     quiet: bool = False
 
+    # Check selection
+    include_checks: List[str] = field(default_factory=list)
+    exclude_checks: List[str] = field(default_factory=list)
+
+    # Logging / diagnostics
+    log_file: Optional[Path] = None
+    verbose: bool = False
+    debug: bool = False
+
     @classmethod
     def load(cls, config_path: Optional[Path] = None) -> "Config":
         """
@@ -101,9 +110,17 @@ class Config:
                     value = Severity(value.lower())
                 except ValueError:
                     continue
-            elif key in ("output_path", "ca_bundle") and value is not None:
+            elif key in ("output_path", "ca_bundle", "log_file") and value is not None:
                 value = _PosixStrPath(value)
             setattr(cfg, key, value)
+
+    @classmethod
+    def build(cls, config_path: Optional[Path], overrides: dict) -> "Config":
+        """Load config (YAML + env), then overlay non-None CLI overrides (CLI wins)."""
+        cfg = cls.load(config_path)
+        filtered = {k: v for k, v in overrides.items() if v is not None}
+        cls._apply_dict(cfg, filtered)
+        return cfg
 
     @staticmethod
     def _apply_env(cfg: "Config") -> None:

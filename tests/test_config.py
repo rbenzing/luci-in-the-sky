@@ -196,3 +196,31 @@ class TestConfigApplyDict:
         cfg = Config()
         Config._apply_dict(cfg, {"severity_threshold": "medium"})
         assert cfg.severity_threshold == Severity.MEDIUM
+
+
+def test_config_has_new_fields():
+    cfg = Config()
+    assert cfg.include_checks == []
+    assert cfg.exclude_checks == []
+    assert cfg.log_file is None
+    assert cfg.verbose is False
+    assert cfg.debug is False
+
+
+def test_build_cli_overrides_win_over_yaml(tmp_path):
+    cf = tmp_path / "c.yml"
+    cf.write_text("mode: active\nthreads: 3\n")
+    cfg = Config.build(cf, {"threads": 9, "mode": None})
+    assert cfg.threads == 9          # CLI wins
+    assert cfg.mode == ScanMode.ACTIVE  # None override ignored -> YAML value kept
+
+
+def test_build_none_overrides_are_ignored(tmp_path):
+    cfg = Config.build(None, {"severity_threshold": None})
+    assert cfg.severity_threshold == Severity.INFO  # default preserved
+
+
+def test_build_coerces_string_overrides():
+    cfg = Config.build(None, {"mode": "full", "severity_threshold": "high"})
+    assert cfg.mode == ScanMode.FULL
+    assert cfg.severity_threshold == Severity.HIGH

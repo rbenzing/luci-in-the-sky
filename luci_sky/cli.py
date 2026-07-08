@@ -78,6 +78,10 @@ def cli() -> None:
               help="CA bundle path for TLS verify.")
 @click.option("--extra-cred", "extra_cred", multiple=True,
               help="Extra USER:PASS to try (repeatable).")
+@click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose (INFO) logging.")
+@click.option("--debug", is_flag=True, default=False, help="Debug logging + full audit bodies.")
+@click.option("--log-file", "log_file", default=None, type=click.Path(),
+              help="Write a JSONL audit log of every request.")
 def scan(
     target_url: str,
     mode: Optional[str],
@@ -102,6 +106,9 @@ def scan(
     exclude: tuple,
     ca_bundle: Optional[str],
     extra_cred: tuple,
+    verbose: bool,
+    debug: bool,
+    log_file: Optional[str],
 ) -> None:
     """Run a security scan against TARGET_URL."""
     extra_credentials = []
@@ -137,6 +144,17 @@ def scan(
     if no_verify_tls:
         cfg.verify_tls = False
     cfg.confirm = confirm
+
+    import logging as _logging
+    if debug:
+        cfg.debug = True
+        _logging.basicConfig(level=_logging.DEBUG)
+    elif verbose:
+        cfg.verbose = True
+        _logging.basicConfig(level=_logging.INFO)
+    if log_file:
+        cfg.log_file = Path(log_file)
+
     scan_mode = cfg.mode
 
     # Show disclaimer

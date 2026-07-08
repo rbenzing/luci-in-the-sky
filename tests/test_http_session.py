@@ -9,8 +9,11 @@ from __future__ import annotations
 import time
 from unittest.mock import MagicMock, patch, PropertyMock
 
+import json
 import pytest
+import requests_mock
 
+from luci_sky.audit import AuditLogger
 from luci_sky.config import Config
 from luci_sky.models import Target
 from luci_sky.session.http import SessionManager
@@ -288,3 +291,28 @@ class TestSessionManagerRetry:
         # max_retries total should be >= 1 (architecture spec: retry=2)
         retries = adapter.max_retries
         assert retries is not None
+
+
+# ---------------------------------------------------------------------------
+# Audit logging (Task 9)
+# ---------------------------------------------------------------------------
+
+
+def test_session_records_audit(tmp_path):
+    cfg = Config()
+    cfg.verify_tls = False
+    log = AuditLogger(log_file=tmp_path / "a.jsonl")
+    sm = SessionManager(cfg, audit=log)
+    with requests_mock.Mocker() as m:
+        m.get("https://h/x", text="body-here", status_code=200)
+        sm.get("https://h/x")
+    log.close()
+    rec = json.loads((tmp_path / "a.jsonl").read_text(encoding="utf-8").splitlines()[0])
+    assert rec["method"] == "GET" and rec["status"] == 200
+
+
+def test_clone_shares_audit(tmp_path):
+    cfg = Config()
+    log = AuditLogger(log_file=tmp_path / "a.jsonl")
+    sm = SessionManager(cfg, audit=log)
+    assert sm.clone()._audit is log

@@ -32,14 +32,14 @@ def _get_filtered_checks(*args, **kwargs):
     return fn(*args, **kwargs)
 
 
-def _make_session_manager(config):
+def _make_session_manager(config, audit=None):
     """
     Indirection so patch("luci_sky.scanner.SessionManager") works even after
     test_packaging.py reloads luci_sky.* modules mid-session.
     """
     scanner_mod = _sys.modules.get("luci_sky.scanner")
     cls = getattr(scanner_mod, "SessionManager", SessionManager) if scanner_mod else SessionManager
-    return cls(config)
+    return cls(config, audit=audit)
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,10 @@ class Scanner:
         config = self._config
         target_url = config.target_url or ""
 
-        session = _make_session_manager(config)
+        from luci_sky.audit import AuditLogger
+        audit = AuditLogger(log_file=getattr(config, "log_file", None),
+                            debug=getattr(config, "debug", False))
+        session = _make_session_manager(config, audit=audit)
         target = self._build_target(target_url)
 
         started_at = datetime.utcnow()
@@ -190,6 +193,7 @@ class Scanner:
 
         # Release connection pool resources
         session.close()
+        audit.close()
 
         finished_at = datetime.utcnow()
 

@@ -15,7 +15,7 @@ import random
 import threading
 import time
 from copy import deepcopy
-from typing import Any, Optional
+from typing import Any, Optional, TYPE_CHECKING
 
 import requests
 import urllib3
@@ -24,6 +24,9 @@ from urllib3.util.retry import Retry
 
 from luci_sky.config import Config
 from luci_sky.models import Target
+
+if TYPE_CHECKING:
+    from luci_sky.audit import AuditLogger
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -35,8 +38,9 @@ class SessionManager:
     Managed HTTP session with rate limiting, retries, proxy, and auth support.
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, audit: "Optional[AuditLogger]" = None) -> None:
         self._config = config
+        self._audit = audit
         self._session: requests.Session = self._build_session()
         self._lock = threading.Lock()
         self._last_request_time: float = 0.0
@@ -108,7 +112,19 @@ class SessionManager:
         else:
             kwargs.setdefault("verify", self._config.verify_tls)
         logger.debug("%s %s", method, url)
-        return self._session.request(method, url, **kwargs)
+        start = time.monotonic()
+        resp = self._session.request(method, url, **kwargs)
+        if self._audit is not None:
+            elapsed_ms = (time.monotonic() - start) * 1000.0
+            body = resp.text or ""
+            self._audit.record(
+                method=method, url=url, status=resp.status_code,
+                elapsed_ms=elapsed_ms, req_bytes=len(kwargs.get("data", "") or ""),
+                resp_bytes=len(resp.content or b""), snippet=body[:300],
+                req_body=str(kwargs.get("data", "") or kwargs.get("json", "") or ""),
+                resp_body=body,
+            )
+        return resp
 
     def get(self, url: str, **kwargs: Any) -> requests.Response:
         return self._request("GET", url, **kwargs)
@@ -202,7 +218,7 @@ class SessionManager:
         Return a new SessionManager with an independent connection pool
         but the same cookies (auth state shared).
         """
-        cloned = SessionManager(self._config)
+        cloned = SessionManager(self._config, audit=self._audit)
         # Copy cookies from the current session
         for cookie in self._session.cookies:
             cloned._session.cookies.set_cookie(cookie)

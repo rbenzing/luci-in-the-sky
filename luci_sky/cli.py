@@ -450,3 +450,28 @@ def version() -> None:
     cve_count = len(db._entries)
     click.echo(f"LuCI-RedTeam version {luci_sky.__version__}")
     click.echo(f"CVE database: {cve_count} entries loaded")
+
+
+# ---------------------------------------------------------------------------
+# update-cve command
+# ---------------------------------------------------------------------------
+
+
+@cli.command("update-cve")
+@click.option("--url", default=None, help="URL to fetch the CVE database from.")
+@click.option("--from-file", "from_file", default=None, type=click.Path(exists=True),
+              help="Local YAML file to install instead of fetching.")
+@click.option("--force", is_flag=True, default=False, help="Overwrite without prompting.")
+def update_cve(url, from_file, force):
+    """Update the local CVE database."""
+    from luci_sky.cve.update import update_cve_db
+    from luci_sky.cve.database import CVEDatabase
+    try:
+        dest = update_cve_db(url=url, from_file=Path(from_file) if from_file else None, force=force)
+    except Exception as exc:
+        click.echo(f"Update failed: {exc}", err=True)
+        sys.exit(2)
+    CVEDatabase.reset()
+    db = CVEDatabase()
+    click.echo(f"CVE database updated: {dest}")
+    click.echo(f"Version: {db.db_version}  Updated: {db.updated}  Entries: {len(db._entries)}")

@@ -361,3 +361,25 @@ def test_scan_config_flag_sets_mode(tmp_path):
                       catch_exceptions=False)
     from luci_sky.models import Severity
     assert captured["cfg"].severity_threshold == Severity.CRITICAL
+
+
+def test_scan_debug_and_log_file_flags_set_on_config(tmp_path):
+    log_path = tmp_path / "audit.jsonl"
+    runner = CliRunner()
+    captured = {}
+    with patch("luci_sky.cli.Scanner") as M:
+        def _capture(cfg, *a, **k):
+            captured["cfg"] = cfg
+            M.return_value.run.return_value = _make_empty_result()
+            return M.return_value
+        M.side_effect = _capture
+        runner.invoke(
+            cli,
+            [
+                "scan", "https://192.168.1.1", "--confirm",
+                "--debug", "--log-file", str(log_path),
+            ],
+            catch_exceptions=False,
+        )
+    assert captured["cfg"].debug is True
+    assert str(log_path) in str(captured["cfg"].log_file)

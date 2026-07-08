@@ -21,3 +21,15 @@ def test_sanitize_masks_authorization_header():
 
 def test_sanitize_truncates_to_max_len():
     assert len(sanitize("x" * 5000, max_len=100)) == 100
+
+
+def test_sanitize_masks_dict_repr_password():
+    out = sanitize(str({"luci_username": "root", "luci_password": "supersecret123"}))
+    assert "supersecret123" not in out
+    assert "root" in out  # username is not a secret; only the password is masked
+
+
+def test_sanitize_masks_json_password():
+    out = sanitize('{"luci_password": "hunter2", "other": "keep"}')
+    assert "hunter2" not in out
+    assert "keep" in out

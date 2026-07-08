@@ -17,6 +17,7 @@ from luci_sky.models import (
     Category,
     Confidence,
     Finding,
+    Phase,
     ScanMode,
     ScanResult,
     Severity,
@@ -321,3 +322,42 @@ class TestScannerRun:
         checks = [_make_mock_check(f"chk{i}", []) for i in range(3)]
         result = self._run_with_mocked_checks(checks)
         assert result.checks_run == 3
+
+
+class _ReconSetsVersion:
+    id = "recon_probe"
+    phase = Phase.RECON
+
+    def run(self, target, session, config):
+        target.detected_version = "21.02.3"
+        return []
+
+
+class _AnalysisReadsVersion:
+    id = "analysis_reader"
+    phase = Phase.ANALYSIS
+    seen = {}
+
+    def run(self, target, session, config):
+        type(self).seen["version"] = target.detected_version
+        return []
+
+
+def test_recon_runs_before_analysis():
+    recon = _ReconSetsVersion()
+    analysis = _AnalysisReadsVersion()
+    type(analysis).seen = {}
+    cfg = Config()
+    cfg.target_url = "https://192.168.1.1"
+
+    # Patch the underlying `filtered_checks`/`SessionManager` names (not the
+    # `_get_filtered_checks`/`_make_session_manager` indirections) so this
+    # keeps working after tests/test_packaging.py::test_no_circular_imports
+    # reloads luci_sky.* mid-session — see the indirections' docstrings.
+    with patch("luci_sky.scanner.filtered_checks", return_value=[analysis, recon]), \
+         patch("luci_sky.scanner.SessionManager") as MS:
+        MS.return_value.clone.return_value = MS.return_value
+        MS.return_value.authenticate.return_value = False
+        Scanner(cfg).run()
+
+    assert _AnalysisReadsVersion.seen["version"] == "21.02.3"

@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 import queue
 import threading
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Callable, Dict, List, Optional
@@ -16,7 +17,7 @@ from urllib.parse import urlparse
 
 import sys as _sys
 from luci_sky.config import Config
-from luci_sky.models import Finding, ScanMode, ScanResult, Severity, Target
+from luci_sky.models import Finding, Phase, ScanMode, ScanResult, Severity, Target
 from luci_sky.session.http import SessionManager
 from luci_sky.checks import filtered_checks
 
@@ -125,32 +126,57 @@ class Scanner:
             requires_auth=target.is_authenticated,
         )
 
-        # Execute checks concurrently
+        # Execute checks concurrently, grouped by phase (RECON before
+        # ANALYSIS before EXPLOIT) so that ANALYSIS/EXPLOIT checks reading
+        # target state (e.g. detected_version) always observe RECON's writes.
         findings: List[Finding] = []
         checks_run = len(checks)
         checks_failed_counter = [0]
+        completed = [0]
         lock = threading.Lock()
 
         def run_check(check) -> List[Finding]:
             check_id = check.__class__.id
+            phase = getattr(check.__class__, "phase", Phase.ANALYSIS)
             try:
-                self._emit_progress({"status": "started", "check_id": check_id})
+                self._emit_progress({"status": "started", "check_id": check_id,
+                                     "phase": int(phase)})
                 thread_session = session.clone()
                 result = check.run(target, thread_session, config)
-                self._emit_progress({"status": "done", "check_id": check_id, "findings": len(result)})
+                with lock:
+                    completed[0] += 1
+                self._emit_progress({"status": "done", "check_id": check_id,
+                                     "phase": int(phase), "findings": len(result or []),
+                                     "completed": completed[0], "total": checks_run})
                 return result or []
             except Exception as exc:
                 logger.warning("Check %s failed: %s", check_id, exc)
                 with lock:
                     checks_failed_counter[0] += 1
-                self._emit_progress({"status": "error", "check_id": check_id, "error": str(exc)})
+                    completed[0] += 1
+                self._emit_progress({"status": "error", "check_id": check_id,
+                                     "phase": int(phase), "error": str(exc),
+                                     "completed": completed[0], "total": checks_run})
                 return []
 
+        by_phase = defaultdict(list)
+        for c in checks:
+            by_phase[getattr(c.__class__, "phase", Phase.ANALYSIS)].append(c)
+
         max_workers = max(1, config.threads)
-        with ThreadPoolExecutor(max_workers=max_workers) as ex:
-            futures = {ex.submit(run_check, c): c for c in checks}
-            for fut in as_completed(futures):
-                findings.extend(fut.result())
+        # Sort by int(phase) rather than the raw key: real checks carry a
+        # Phase IntEnum (directly comparable), but test doubles built as
+        # bare MagicMock() with a reassigned __class__ auto-vivify a mock
+        # `.phase` attribute instead of tripping the getattr() default, and
+        # those mocks aren't mutually orderable with `<`. int() sidesteps
+        # that — a default MagicMock coerces to 1, which equals
+        # int(Phase.ANALYSIS), the same fallback phase getattr() intends.
+        for phase in sorted(by_phase.keys(), key=int):
+            phase_checks = by_phase[phase]
+            with ThreadPoolExecutor(max_workers=max_workers) as ex:
+                futures = {ex.submit(run_check, c): c for c in phase_checks}
+                for fut in as_completed(futures):
+                    findings.extend(fut.result())
 
         # Sort findings: severity descending, then CVSS descending
         findings.sort(

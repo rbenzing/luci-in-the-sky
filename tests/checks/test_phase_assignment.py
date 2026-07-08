@@ -1,4 +1,3 @@
-import luci_sky.checks  # triggers registration
 from luci_sky.checks import get_check
 from luci_sky.models import Phase
 

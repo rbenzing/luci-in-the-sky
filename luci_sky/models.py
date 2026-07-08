@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional
 
 
@@ -57,6 +57,14 @@ class ScanMode(str, Enum):
         """Return True if this scan mode permits running a check that requires *required_mode*."""
         order = {ScanMode.PASSIVE: 0, ScanMode.ACTIVE: 1, ScanMode.FULL: 2}
         return order[self] >= order[required_mode]
+
+
+class Phase(IntEnum):
+    """Scan phase ordering: recon runs before analysis before exploitation."""
+
+    RECON = 0
+    ANALYSIS = 1
+    EXPLOIT = 2
 
 
 class Confidence(str, Enum):

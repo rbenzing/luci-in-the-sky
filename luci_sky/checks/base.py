@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import ClassVar, List, Optional
 
 from luci_sky.config import Config
-from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.models import Category, Confidence, Finding, Phase, ScanMode, Severity, Target
 from luci_sky.sanitize import sanitize as _shared_sanitize
 
 
@@ -27,6 +27,7 @@ class _CheckMeta(ABCMeta):
         ns["severity"] = Severity.HIGH
         ns["min_mode"] = ScanMode.PASSIVE
         ns["requires_auth"] = False
+        ns["phase"] = Phase.ANALYSIS
         return ns
 
 
@@ -40,6 +41,7 @@ class Check(metaclass=_CheckMeta):
     severity: ClassVar[Severity]
     min_mode: ClassVar[ScanMode]
     requires_auth: ClassVar[bool]
+    phase: ClassVar[Phase]
     description: ClassVar[str]
     cve_ids: ClassVar[List[str]]
 

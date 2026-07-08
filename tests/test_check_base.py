@@ -6,7 +6,6 @@ Tests will fail with ImportError until luci_sky/checks/base.py is implemented.
 from __future__ import annotations
 
 from typing import List
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -14,8 +13,8 @@ from luci_sky.checks.base import Check
 from luci_sky.config import Config
 from luci_sky.models import (
     Category,
-    Confidence,
     Finding,
+    Phase,
     ScanMode,
     Severity,
     Target,
@@ -266,3 +265,26 @@ class TestSanitize:
         long_text = "b" * 5000
         result = Check._sanitize(long_text)
         assert len(result) <= 2000
+
+
+# ---------------------------------------------------------------------------
+# Phase enum and Check.phase default
+# ---------------------------------------------------------------------------
+
+
+def test_phase_ordering():
+    assert Phase.RECON < Phase.ANALYSIS < Phase.EXPLOIT
+
+
+def test_check_phase_defaults_to_analysis():
+    class Dummy(Check):
+        id = "dummy_phase_check"
+        name = "Dummy"
+        category = Category.CONFIGURATION
+        description = "d"
+        cve_ids = []
+
+        def run(self, target, session, config):
+            return []
+
+    assert Dummy.phase == Phase.ANALYSIS

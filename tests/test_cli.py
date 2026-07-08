@@ -383,3 +383,15 @@ def test_scan_debug_and_log_file_flags_set_on_config(tmp_path):
         )
     assert captured["cfg"].debug is True
     assert str(log_path) in str(captured["cfg"].log_file)
+
+
+def test_scan_quiet_runs_without_progress():
+    runner = CliRunner()
+    with patch("luci_sky.cli.Scanner") as M:
+        M.return_value.run.return_value = _make_empty_result()
+        result = runner.invoke(cli, ["scan", "https://192.168.1.1", "--confirm", "--quiet"],
+                               catch_exceptions=False)
+    assert result.exit_code == 0
+    # Scanner constructed with a progress_callback kwarg (None under quiet/non-TTY)
+    _, kwargs = M.call_args
+    assert "progress_callback" in kwargs

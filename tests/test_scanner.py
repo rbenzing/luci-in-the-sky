@@ -361,3 +361,28 @@ def test_recon_runs_before_analysis():
         Scanner(cfg).run()
 
     assert _AnalysisReadsVersion.seen["version"] == "21.02.3"
+
+
+def test_progress_events_include_totals():
+    events = []
+
+    class _C:
+        id = "p_check"
+        phase = Phase.RECON
+        def run(self, target, session, config):
+            return []
+
+    cfg = Config()
+    cfg.target_url = "https://192.168.1.1"
+    # Patch the underlying `filtered_checks`/`SessionManager` names (not the
+    # `_get_filtered_checks`/`_make_session_manager` indirections) — see the
+    # indirections' docstrings and the comment on test_recon_runs_before_analysis.
+    with patch("luci_sky.scanner.filtered_checks", return_value=[_C()]), \
+         patch("luci_sky.scanner.SessionManager") as MS:
+        MS.return_value.clone.return_value = MS.return_value
+        MS.return_value.authenticate.return_value = False
+        Scanner(cfg, progress_callback=events.append).run()
+
+    done = [e for e in events if e["status"] == "done"]
+    assert done and done[0]["total"] == 1 and done[0]["completed"] == 1
+    assert "phase" in done[0]

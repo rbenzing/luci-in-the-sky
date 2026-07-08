@@ -35,6 +35,32 @@ def cli() -> None:
     """LuCI-RedTeam — OpenWrt / LuCI security assessment tool."""
 
 
+def _make_progress_callback(quiet: bool):
+    """Return (callback, finalizer). Callback is None when progress is suppressed."""
+    import sys as _sys
+    if quiet or not _sys.stdout.isatty():
+        return None, (lambda: None)
+    from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
+
+    progress = Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TextColumn("{task.completed}/{task.total}"),
+    )
+    progress.start()
+    task_id = progress.add_task("Scanning", total=None)
+
+    def _cb(event: dict) -> None:
+        total = event.get("total")
+        if total is not None:
+            progress.update(task_id, total=total, completed=event.get("completed", 0))
+        if event.get("status") == "started":
+            progress.update(task_id, description=f"[{event.get('phase','')}] {event.get('check_id','')}")
+
+    return _cb, progress.stop
+
+
 # ---------------------------------------------------------------------------
 # scan command
 # ---------------------------------------------------------------------------
@@ -170,12 +196,16 @@ def scan(
             sys.exit(0)
 
     # Run scan
-    scanner = Scanner(cfg)
+    progress_cb, stop_progress = _make_progress_callback(cfg.quiet)
+    scanner = Scanner(cfg, progress_callback=progress_cb)
     try:
         result = scanner.run()
     except RuntimeError as exc:
+        stop_progress()
         click.echo(f"Error: {exc}", err=True)
         sys.exit(2)
+    finally:
+        stop_progress()
 
     # Render reports
     from luci_sky.reporters import get_reporters

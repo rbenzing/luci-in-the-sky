@@ -12,7 +12,7 @@ from typing import List
 from luci_sky.checks.base import Check
 from luci_sky.checks import register
 from luci_sky.config import Config
-from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.models import Category, Confidence, Finding, Phase, ScanMode, Severity, Target
 
 _COMMAND_INDICATORS = [
     re.compile(r"uid=\d+\(\w+\)\s+gid=\d+"),           # id output
@@ -69,6 +69,7 @@ class CommandInjection(Check):
     category = Category.INJECTION
     severity = Severity.CRITICAL
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = (
         "Tests diagnostic endpoints for command injection via malicious payloads. "
@@ -159,6 +160,7 @@ class PathTraversal(Check):
     category = Category.INJECTION
     severity = Severity.HIGH
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = "Tests common traversal payloads against file-serving endpoints."
     cve_ids: List[str] = ["CVE-2013-0229"]
@@ -222,6 +224,7 @@ class TimeBasedInjection(Check):
     category = Category.INJECTION
     severity = Severity.CRITICAL
     min_mode = ScanMode.FULL
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = "Tests for time-based blind command injection via sleep payloads."
     cve_ids: List[str] = ["CVE-2022-46623"]

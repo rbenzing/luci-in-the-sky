@@ -13,7 +13,7 @@ from typing import List
 from luci_sky.checks.base import Check
 from luci_sky.checks import register
 from luci_sky.config import Config
-from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.models import Category, Confidence, Finding, Phase, ScanMode, Severity, Target
 
 _WEAK_PROTOCOLS = {"SSLv2", "SSLv3", "TLSv1", "TLSv1.0", "TLSv1.1"}
 _WEAK_CIPHER_PATTERNS = ("RC4", "DES", "MD5", "NULL", "EXPORT", "ANON", "ADH", "AECDH")
@@ -29,6 +29,7 @@ class TLSAnalysis(Check):
     category = Category.TLS
     severity = Severity.HIGH
     min_mode = ScanMode.PASSIVE
+    phase = Phase.ANALYSIS
     requires_auth = False
     description = (
         "Checks TLS protocol version, cipher strength, certificate validity, "

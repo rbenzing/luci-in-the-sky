@@ -11,7 +11,7 @@ from typing import List
 from luci_sky.checks.base import Check
 from luci_sky.checks import register
 from luci_sky.config import Config
-from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.models import Category, Confidence, Finding, Phase, ScanMode, Severity, Target
 
 _DEFAULT_CREDENTIALS = [
     ("root", ""),
@@ -34,6 +34,7 @@ class DefaultCredentials(Check):
     category = Category.AUTHENTICATION
     severity = Severity.CRITICAL
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = "Tests a list of commonly-known default username/password pairs against LuCI."
     cve_ids: List[str] = ["CVE-2019-12272"]
@@ -100,6 +101,7 @@ class AuthBypass(Check):
     category = Category.AUTHENTICATION
     severity = Severity.CRITICAL
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = "Tests authentication bypass techniques: path manipulation and X-Forwarded-For spoofing."
     cve_ids: List[str] = ["CVE-2021-33998"]
@@ -162,6 +164,7 @@ class RateLimiting(Check):
     category = Category.AUTHENTICATION
     severity = Severity.MEDIUM
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = "Sends 20 rapid failed login attempts to detect absence of brute-force protection."
     cve_ids: List[str] = []
@@ -241,6 +244,7 @@ class RateLimitStress(Check):
     category = Category.AUTHENTICATION
     severity = Severity.MEDIUM
     min_mode = ScanMode.FULL
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = "Sends 50 concurrent login requests to stress-test rate limiting defenses."
     cve_ids: List[str] = []

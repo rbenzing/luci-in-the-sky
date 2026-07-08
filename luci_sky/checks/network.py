@@ -15,7 +15,7 @@ from typing import List
 from luci_sky.checks.base import Check
 from luci_sky.checks import register
 from luci_sky.config import Config
-from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.models import Category, Confidence, Finding, Phase, ScanMode, Severity, Target
 
 _SCAN_PORTS = [21, 22, 23, 25, 53, 80, 443, 445, 3306, 8080, 8443, 8888, 9090]
 _DANGEROUS_PORTS = {
@@ -36,6 +36,7 @@ class PortScan(Check):
     category = Category.NETWORK
     severity = Severity.HIGH
     min_mode = ScanMode.PASSIVE
+    phase = Phase.RECON
     requires_auth = False
     description = "Scans common TCP ports and grabs service banners."
     cve_ids: List[str] = []
@@ -108,6 +109,7 @@ class ServiceSecurity(Check):
     category = Category.NETWORK
     severity = Severity.CRITICAL
     min_mode = ScanMode.PASSIVE
+    phase = Phase.ANALYSIS
     requires_auth = False
     description = "Evaluates the security risk of open network services (Telnet, FTP, etc.)."
     cve_ids: List[str] = []
@@ -168,6 +170,7 @@ class CORSMisconfiguration(Check):
     category = Category.NETWORK
     severity = Severity.HIGH
     min_mode = ScanMode.PASSIVE
+    phase = Phase.ANALYSIS
     requires_auth = False
     description = "Checks CORS headers for wildcard origins and credential-allowing misconfigurations."
     cve_ids: List[str] = []
@@ -254,6 +257,7 @@ class DNSRebinding(Check):
     category = Category.NETWORK
     severity = Severity.MEDIUM
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = "Tests whether the server accepts requests with malicious Host headers."
     cve_ids: List[str] = []
@@ -302,6 +306,7 @@ class RPCExploitation(Check):
     category = Category.NETWORK
     severity = Severity.CRITICAL
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = "Tests rpcd/ubus endpoints for unauthenticated method invocation."
     cve_ids: List[str] = ["CVE-2021-45444"]
@@ -360,6 +365,7 @@ class UPnPAudit(Check):
     category = Category.NETWORK
     severity = Severity.HIGH
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = "Checks for UPnP service exposure via HTTP description endpoint."
     cve_ids: List[str] = []
@@ -412,6 +418,7 @@ class UPnPPortMapping(Check):
     category = Category.NETWORK
     severity = Severity.HIGH
     min_mode = ScanMode.FULL
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = "Attempts to add a UPnP port mapping to verify write access to UPnP service."
     cve_ids: List[str] = []
@@ -480,6 +487,7 @@ class WANExposure(Check):
     category = Category.NETWORK
     severity = Severity.CRITICAL
     min_mode = ScanMode.PASSIVE
+    phase = Phase.ANALYSIS
     requires_auth = True
     description = "Uses UCI to check if uhttpd listens on WAN interface addresses."
     cve_ids: List[str] = []
@@ -532,6 +540,7 @@ class FirewallAudit(Check):
     category = Category.NETWORK
     severity = Severity.HIGH
     min_mode = ScanMode.PASSIVE
+    phase = Phase.ANALYSIS
     requires_auth = True
     description = "Retrieves and audits firewall rules for overly permissive configurations."
     cve_ids: List[str] = []
@@ -587,6 +596,7 @@ class WirelessAudit(Check):
     category = Category.NETWORK
     severity = Severity.HIGH
     min_mode = ScanMode.PASSIVE
+    phase = Phase.ANALYSIS
     requires_auth = True
     description = "Reviews wireless UCI configuration for weak encryption and security settings."
     cve_ids: List[str] = ["CVE-2022-23303"]

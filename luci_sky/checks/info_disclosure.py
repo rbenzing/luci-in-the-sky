@@ -13,7 +13,7 @@ from typing import List, Optional
 from luci_sky.checks.base import Check
 from luci_sky.checks import register
 from luci_sky.config import Config
-from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.models import Category, Confidence, Finding, Phase, ScanMode, Severity, Target
 
 _VERSION_REGEX = re.compile(
     r"OpenWrt\s+(\d{2}\.\d{2}(?:\.\d+)?(?:-rc\d+)?)",
@@ -98,6 +98,7 @@ class VersionDetection(Check):
     category = Category.INFORMATION_DISCLOSURE
     severity = Severity.INFO
     min_mode = ScanMode.PASSIVE
+    phase = Phase.RECON
     requires_auth = False
     description = "Detects the OpenWrt version via response body and header fingerprinting."
     cve_ids: List[str] = []
@@ -174,6 +175,7 @@ class PathEnumeration(Check):
     category = Category.INFORMATION_DISCLOSURE
     severity = Severity.MEDIUM
     min_mode = ScanMode.PASSIVE
+    phase = Phase.RECON
     requires_auth = False
     description = "Probes common LuCI paths to identify accessible endpoints."
     cve_ids: List[str] = []
@@ -229,6 +231,7 @@ class BackupExposure(Check):
     category = Category.INFORMATION_DISCLOSURE
     severity = Severity.CRITICAL
     min_mode = ScanMode.PASSIVE
+    phase = Phase.ANALYSIS
     requires_auth = False
     description = (
         "Probes common backup file paths for unprotected configuration archives "
@@ -305,6 +308,7 @@ class PackageEnumeration(Check):
     category = Category.INFORMATION_DISCLOSURE
     severity = Severity.INFO
     min_mode = ScanMode.PASSIVE
+    phase = Phase.RECON
     requires_auth = False
     description = "Infers installed LuCI packages from JS includes in the admin interface."
     cve_ids: List[str] = []
@@ -352,6 +356,7 @@ class SecurityHeaders(Check):
     category = Category.INFORMATION_DISCLOSURE
     severity = Severity.MEDIUM
     min_mode = ScanMode.PASSIVE
+    phase = Phase.ANALYSIS
     requires_auth = False
     description = "Checks for the presence and correct values of HTTP security response headers."
     cve_ids: List[str] = []

@@ -10,7 +10,7 @@ from typing import List
 from luci_sky.checks.base import Check
 from luci_sky.checks import register
 from luci_sky.config import Config
-from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.models import Category, Confidence, Finding, Phase, ScanMode, Severity, Target
 
 _XSS_PAYLOADS = [
     "<script>alert(1)</script>",
@@ -54,6 +54,7 @@ class XSSDetection(Check):
     category = Category.XSS
     severity = Severity.HIGH
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = (
         "Tests LuCI endpoints for reflected XSS by injecting payloads via GET and POST "
@@ -136,6 +137,7 @@ class StoredXSS(Check):
     category = Category.XSS
     severity = Severity.HIGH
     min_mode = ScanMode.FULL
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = (
         "Injects XSS payloads into persistent fields (hostname, SSID) and checks "

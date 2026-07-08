@@ -11,7 +11,7 @@ from typing import List, Optional
 from luci_sky.checks.base import Check
 from luci_sky.checks import register
 from luci_sky.config import Config
-from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.models import Category, Confidence, Finding, Phase, ScanMode, Severity, Target
 
 # Patterns that indicate a CSRF token field in a form
 _TOKEN_PATTERNS = [
@@ -49,6 +49,7 @@ class CSRFValidation(Check):
     category = Category.CSRF
     severity = Severity.MEDIUM
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = (
         "Checks LuCI admin forms for CSRF token presence and validates that the server "

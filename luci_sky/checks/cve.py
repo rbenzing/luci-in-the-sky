@@ -11,7 +11,7 @@ from luci_sky.checks.base import Check
 from luci_sky.checks import register
 from luci_sky.config import Config
 from luci_sky.cve.database import CVEDatabase
-from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.models import Category, Confidence, Finding, Phase, ScanMode, Severity, Target
 
 
 @register
@@ -23,6 +23,7 @@ class CVECorrelation(Check):
     category = Category.CVE
     severity = Severity.CRITICAL
     min_mode = ScanMode.PASSIVE
+    phase = Phase.ANALYSIS
     requires_auth = False
     description = (
         "Matches the detected OpenWrt version against the CVE database and generates "

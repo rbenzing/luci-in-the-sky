@@ -10,7 +10,7 @@ from typing import List, Optional
 from luci_sky.checks.base import Check
 from luci_sky.checks import register
 from luci_sky.config import Config
-from luci_sky.models import Category, Confidence, Finding, ScanMode, Severity, Target
+from luci_sky.models import Category, Confidence, Finding, Phase, ScanMode, Severity, Target
 
 
 def _get_sysauth_cookie(resp) -> Optional[object]:
@@ -41,6 +41,7 @@ class SessionManagement(Check):
     category = Category.SESSION
     severity = Severity.HIGH
     min_mode = ScanMode.ACTIVE
+    phase = Phase.EXPLOIT
     requires_auth = False
     description = (
         "Checks sysauth session cookie flags (Secure, HttpOnly, SameSite), "

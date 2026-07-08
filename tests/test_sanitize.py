@@ -33,3 +33,17 @@ def test_sanitize_masks_json_password():
     out = sanitize('{"luci_password": "hunter2", "other": "keep"}')
     assert "hunter2" not in out
     assert "keep" in out
+
+
+def test_sanitize_masks_password_with_apostrophe():
+    out = sanitize(str({"luci_password": "it's", "user": "root"}))
+    assert "it's" not in out
+    assert "'s" not in out           # no suffix leak
+    assert "user" in out
+
+
+def test_sanitize_masks_password_with_embedded_quote():
+    import json
+    out = sanitize(json.dumps({"luci_password": 'ab"cd', "keep": "x"}))
+    assert "ab" not in out and "cd" not in out
+    assert "keep" in out

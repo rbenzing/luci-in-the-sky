@@ -1,144 +1,78 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LuCI-RedTeam Security Report</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LuCI-RedTeam Report — {{ result.target.url }}</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; color: #333; }
-  .header { background: #1a1a2e; color: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-  .header h1 { margin: 0 0 10px 0; font-size: 1.8em; }
-  .summary { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
-  .summary-card { background: #fff; border-radius: 8px; padding: 15px 20px; min-width: 100px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-  .summary-card .count { font-size: 2em; font-weight: bold; }
-  .summary-card .label { font-size: 0.85em; color: #666; }
-  .critical-color { color: {{ severity_colors.CRITICAL | safe }}; }
-  .high-color { color: {{ severity_colors.HIGH | safe }}; }
-  .medium-color { color: {{ severity_colors.MEDIUM | safe }}; }
-  .low-color { color: {{ severity_colors.LOW | safe }}; }
-  .info-color { color: {{ severity_colors.INFO | safe }}; }
-  .findings { margin-top: 20px; }
-  .finding { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-left: 5px solid #ccc; }
-  .finding.critical { border-left-color: {{ severity_colors.CRITICAL | safe }}; }
-  .finding.high { border-left-color: {{ severity_colors.HIGH | safe }}; }
-  .finding.medium { border-left-color: {{ severity_colors.MEDIUM | safe }}; }
-  .finding.low { border-left-color: {{ severity_colors.LOW | safe }}; }
-  .finding.info { border-left-color: {{ severity_colors.INFO | safe }}; }
-  .finding h3 { margin: 0 0 8px 0; }
-  .finding .meta { font-size: 0.85em; color: #666; margin-bottom: 10px; }
-  .finding .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; color: #fff; margin-right: 8px; }
-  .badge.critical { background: {{ severity_colors.CRITICAL | safe }}; }
-  .badge.high { background: {{ severity_colors.HIGH | safe }}; }
-  .badge.medium { background: {{ severity_colors.MEDIUM | safe }}; }
-  .badge.low { background: {{ severity_colors.LOW | safe }}; }
-  .badge.info { background: {{ severity_colors.INFO | safe }}; }
-  .section-title { font-size: 0.9em; font-weight: bold; color: #555; margin-top: 10px; }
-  .evidence { background: #f8f8f8; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.85em; white-space: pre-wrap; overflow-x: auto; }
-  .remediation { background: #e8f5e9; padding: 10px; border-radius: 4px; margin-top: 8px; }
-  .references a { color: #1976d2; }
-  .footer { text-align: center; color: #999; margin-top: 30px; font-size: 0.85em; }
-  .chart-container { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-  h2 { color: #1a1a2e; border-bottom: 2px solid #e0e0e0; padding-bottom: 8px; }
+  :root { color-scheme: light dark; --bg:#fff; --fg:#111; --card:#f5f5f5; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111; --fg:#eee; --card:#1c1c1c; } }
+  body { background:var(--bg); color:var(--fg); font-family:system-ui,sans-serif; margin:0; padding:1.5rem; }
+  .card { background:var(--card); border-radius:8px; padding:1rem; margin-bottom:1rem; }
+  .chip { display:inline-block; padding:.25rem .6rem; border-radius:999px; cursor:pointer;
+          border:1px solid currentColor; margin:.15rem; font-size:.85rem; }
+  .finding { border-left:4px solid #888; padding:.5rem .75rem; margin:.5rem 0; }
+  .evidence { display:none; white-space:pre-wrap; font-family:monospace; font-size:.8rem; }
+  .finding.open .evidence { display:block; }
+  table { border-collapse:collapse; width:100%; }
+  th,td { text-align:left; padding:.3rem .5rem; border-bottom:1px solid #8884; }
 </style>
 </head>
 <body>
-<div class="header">
-  <h1>LuCI-RedTeam Security Scan Report</h1>
-  <p>Target: <strong>{{ result.target.url }}</strong></p>
-  <p>Scan Mode: {{ result.scan_mode.value | upper }} &nbsp;|&nbsp;
-     Tool Version: {{ result.tool_version }} &nbsp;|&nbsp;
-     Duration: {{ "%.1f"|format(result.duration_seconds or 0) }}s</p>
-  <p>Started: {{ result.started_at }} &nbsp;|&nbsp; Finished: {{ result.finished_at }}</p>
-</div>
+  <h1>LuCI-RedTeam Security Report</h1>
+  <div class="card">
+    <h2>Executive Summary</h2>
+    <p>Target: {{ result.target.url }} — Mode: {{ result.scan_mode.value }} —
+       Duration: {{ '%.1f' % (result.duration_seconds or 0) }}s</p>
+    <table>
+      <tr><th>Critical</th><th>High</th><th>Medium</th><th>Low</th><th>Info</th></tr>
+      <tr><td>{{ summary.critical }}</td><td>{{ summary.high }}</td><td>{{ summary.medium }}</td>
+          <td>{{ summary.low }}</td><td>{{ summary.info }}</td></tr>
+    </table>
+  </div>
 
-<h2>Executive Summary</h2>
-<div class="summary">
-  <div class="summary-card">
-    <div class="count critical-color">{{ summary.critical }}</div>
-    <div class="label">CRITICAL</div>
-  </div>
-  <div class="summary-card">
-    <div class="count high-color">{{ summary.high }}</div>
-    <div class="label">HIGH</div>
-  </div>
-  <div class="summary-card">
-    <div class="count medium-color">{{ summary.medium }}</div>
-    <div class="label">MEDIUM</div>
-  </div>
-  <div class="summary-card">
-    <div class="count low-color">{{ summary.low }}</div>
-    <div class="label">LOW</div>
-  </div>
-  <div class="summary-card">
-    <div class="count info-color">{{ summary.info }}</div>
-    <div class="label">INFO</div>
-  </div>
-  <div class="summary-card">
-    <div class="count">{{ result.checks_run }}</div>
-    <div class="label">Checks Run</div>
-  </div>
-</div>
-
-<div class="chart-container">
-  <h3>Severity Distribution</h3>
-  <svg width="400" height="80" xmlns="http://www.w3.org/2000/svg">
-    {% set total = summary.critical + summary.high + summary.medium + summary.low + summary.info %}
-    {% if total > 0 %}
-      {% set crit_w = (summary.critical / total * 400) | int %}
-      {% set high_w = (summary.high / total * 400) | int %}
-      {% set med_w = (summary.medium / total * 400) | int %}
-      {% set low_w = (summary.low / total * 400) | int %}
-      {% set info_w = 400 - crit_w - high_w - med_w - low_w %}
-      <rect x="0" y="20" width="{{ crit_w }}" height="30" fill="{{ severity_colors.CRITICAL | safe }}"/>
-      <rect x="{{ crit_w }}" y="20" width="{{ high_w }}" height="30" fill="{{ severity_colors.HIGH | safe }}"/>
-      <rect x="{{ crit_w + high_w }}" y="20" width="{{ med_w }}" height="30" fill="{{ severity_colors.MEDIUM | safe }}"/>
-      <rect x="{{ crit_w + high_w + med_w }}" y="20" width="{{ low_w }}" height="30" fill="{{ severity_colors.LOW | safe }}"/>
-      <rect x="{{ crit_w + high_w + med_w + low_w }}" y="20" width="{{ info_w }}" height="30" fill="{{ severity_colors.INFO | safe }}"/>
-    {% else %}
-      <rect x="0" y="20" width="400" height="30" fill="#e0e0e0"/>
-      <text x="200" y="40" text-anchor="middle" fill="#999" font-size="12">No findings</text>
-    {% endif %}
-  </svg>
-</div>
-
-<h2>Findings ({{ result.findings | length }})</h2>
-<div class="findings">
-{% for finding in result.findings %}
-  <div class="finding {{ finding.severity.value }}">
-    <span class="badge {{ finding.severity.value }}">{{ finding.severity.value | upper }}</span>
-    <h3>{{ finding.title }}</h3>
-    <div class="meta">
-      ID: {{ finding.id }} &nbsp;|&nbsp;
-      CVSS: {{ finding.cvss_score }} &nbsp;|&nbsp;
-      Check: {{ finding.check_id }} &nbsp;|&nbsp;
-      Confidence: {{ finding.confidence.value | upper }}
-      {% if finding.cve_ids %}&nbsp;|&nbsp; CVEs: {{ finding.cve_ids | join(", ") }}{% endif %}
+  <div class="card">
+    <h3>Severity distribution</h3>
+    {% for sev in ['critical','high','medium','low','info'] %}
+    <div style="margin:.2rem 0;">
+      <span style="display:inline-block;width:5rem;">{{ sev }}</span>
+      <span style="display:inline-block;height:.9rem;vertical-align:middle;
+                   background:{{ severity_colors[sev|upper] }};
+                   width:{{ summary[sev] * 18 }}px;"></span>
+      {{ summary[sev] }}
     </div>
-    <div class="section-title">Description</div>
-    <p>{{ finding.description }}</p>
-    <div class="section-title">Evidence</div>
-    <div class="evidence">{{ finding.evidence }}</div>
-    <div class="section-title">Affected URL</div>
-    <p>{{ finding.affected_url }}</p>
-    <div class="section-title">Remediation</div>
-    <div class="remediation">{{ finding.remediation }}</div>
-    {% if finding.references %}
-    <div class="section-title">References</div>
-    <ul class="references">
-      {% for ref in finding.references %}
-      <li>{{ ref }}</li>
-      {% endfor %}
-    </ul>
-    {% endif %}
+    {% endfor %}
   </div>
-{% else %}
-  <p>No findings detected.</p>
-{% endfor %}
-</div>
 
-<div class="footer">
-  <p>Generated by LuCI-RedTeam v{{ result.tool_version }} &mdash; {{ result.finished_at }}</p>
-  <p><em>This report is for authorized security testing only.</em></p>
-</div>
+  <div class="card">
+    <strong>Filter:</strong>
+    <span class="chip" onclick="filterBySeverity('all')">all</span>
+    {% for sev in ['critical','high','medium','low','info'] %}
+    <span class="chip" onclick="filterBySeverity('{{ sev }}')">{{ sev }}</span>
+    {% endfor %}
+  </div>
+
+  {% for f in result.findings %}
+  <div class="finding" data-severity="{{ f.severity.value }}" data-category="{{ f.category.value }}"
+       onclick="this.classList.toggle('open')">
+    <strong>[{{ f.severity.value|upper }}]</strong> {{ f.title }}
+    ({{ f.id }} — CVSS {{ f.cvss_score }}{% if f.contributing_checks %} — checks: {{ f.contributing_checks|join(', ') }}{% endif %})
+    <div class="evidence">Evidence:
+{{ f.evidence }}
+
+Remediation: {{ f.remediation }}
+{% if f.references %}References:
+{% for r in f.references %}- {{ r }}
+{% endfor %}{% endif %}</div>
+  </div>
+  {% endfor %}
+
+<script>
+function filterBySeverity(sev) {
+  document.querySelectorAll('.finding').forEach(function (el) {
+    el.style.display = (sev === 'all' || el.dataset.severity === sev) ? '' : 'none';
+  });
+}
+</script>
 </body>
 </html>

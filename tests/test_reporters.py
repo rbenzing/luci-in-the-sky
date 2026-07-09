@@ -426,3 +426,33 @@ class TestGetReporters:
         reporters = get_reporters("invalid_format_xyz")
         assert len(reporters) == 1
         assert reporters[0] is TerminalReporter
+
+
+# ---------------------------------------------------------------------------
+# HtmlReporter — self-contained interactive report (Task 15)
+# ---------------------------------------------------------------------------
+
+
+def _render(sample_scan_result, tmp_path) -> str:
+    cfg = Config()
+    out = tmp_path / "r.html"
+    HtmlReporter(cfg).render(sample_scan_result, output_path=out)
+    return out.read_text(encoding="utf-8")
+
+
+def test_html_is_self_contained(sample_scan_result, tmp_path):
+    # "Self-contained" means no external ASSET references. Reference URLs may still
+    # appear as plain text, so assert on asset-loading markers, not the string "http".
+    html = _render(sample_scan_result, tmp_path).lower()
+    assert "<link" not in html      # no external stylesheets
+    assert "src=" not in html        # no external scripts/images
+    assert "href=" not in html       # references rendered as text, not <a> links
+    assert "@import" not in html
+    assert "cdn" not in html
+
+
+def test_html_has_summary_and_filters(sample_scan_result, tmp_path):
+    html = _render(sample_scan_result, tmp_path)
+    assert "Executive Summary" in html
+    assert 'data-severity' in html            # filterable finding rows
+    assert "filterBySeverity" in html          # inline filter script

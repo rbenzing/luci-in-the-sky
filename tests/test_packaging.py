@@ -28,18 +28,25 @@ class TestPackageImportable:
         """
         luci_sky/__init__.py must not import internal submodules.
 
-        The public namespace of luci_sky should contain only dunder attributes
-        plus __version__.  Importing scanner, cli, config, checks, etc. in
-        __init__.py would create circular import risk and violates the
-        architecture contract.
-        """
-        import luci_sky
+        Importing scanner, cli, config, checks, etc. from __init__.py would
+        create circular-import risk and violates the architecture contract.
 
-        # Submodule names that MUST NOT be directly accessible via the package init
-        forbidden_attrs = ["scanner", "cli", "config", "checks", "reporters", "session"]
-        for attr in forbidden_attrs:
-            assert not hasattr(luci_sky, attr), (
-                f"luci_sky.__init__.py must not import '{attr}'; found as attribute"
+        We force a fresh, isolated import of the package (purging any luci_sky.*
+        modules that earlier tests imported) so this checks what __init__.py
+        *itself* pulls in — not what the rest of the test session has loaded.
+        """
+        for mod in [k for k in sys.modules if k == "luci_sky" or k.startswith("luci_sky.")]:
+            del sys.modules[mod]
+
+        import luci_sky  # re-runs __init__.py in isolation
+
+        forbidden = ["scanner", "cli", "config", "checks", "reporters", "session"]
+        for name in forbidden:
+            assert f"luci_sky.{name}" not in sys.modules, (
+                f"luci_sky/__init__.py must not import '{name}'"
+            )
+            assert not hasattr(luci_sky, name), (
+                f"luci_sky/__init__.py must not expose '{name}' as an attribute"
             )
 
     def test_console_script_registered(self):

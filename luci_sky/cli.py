@@ -188,6 +188,12 @@ def scan(
         click.echo(_DISCLAIMER)
         click.echo()
 
+    if not cfg.quiet:
+        from luci_sky.cve.database import CVEDatabase
+        _db = CVEDatabase()
+        if _db.is_stale():
+            click.echo("WARNING: CVE database is over 90 days old. Run 'luci-sky update-cve'.")
+
     # Confirmation gate for active/full modes
     if scan_mode in (ScanMode.ACTIVE, ScanMode.FULL) and not cfg.confirm:
         click.echo(_ACTIVE_CONFIRM_MSG)
@@ -447,9 +453,13 @@ def version() -> None:
     """Display version and CVE database information."""
     from luci_sky.cve.database import CVEDatabase
     db = CVEDatabase()
-    cve_count = len(db._entries)
     click.echo(f"LuCI-RedTeam version {luci_sky.__version__}")
-    click.echo(f"CVE database: {cve_count} entries loaded")
+    click.echo(
+        f"CVE database: {len(db._entries)} entries "
+        f"(version {db.db_version}, updated {db.updated})"
+    )
+    if db.is_stale():
+        click.echo("WARNING: CVE database is over 90 days old. Run 'luci-sky update-cve'.")
 
 
 # ---------------------------------------------------------------------------

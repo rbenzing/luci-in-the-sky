@@ -283,6 +283,17 @@ class TestCliVersion:
         assert "CVE" in result.output or "cve" in result.output.lower()
 
 
+def test_version_shows_db_metadata():
+    runner = CliRunner()
+    with patch("luci_sky.cve.database.CVEDatabase") as DB:
+        DB.return_value._entries = [object(), object()]
+        DB.return_value.db_version = 7
+        DB.return_value.updated = "2026-07-06"
+        result = runner.invoke(cli, ["version"])
+    assert result.exit_code == 0
+    assert "7" in result.output and "2026-07-06" in result.output
+
+
 # ---------------------------------------------------------------------------
 # check command (single-check runner)
 # ---------------------------------------------------------------------------

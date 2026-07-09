@@ -316,3 +316,29 @@ def test_clone_shares_audit(tmp_path):
     log = AuditLogger(log_file=tmp_path / "a.jsonl")
     sm = SessionManager(cfg, audit=log)
     assert sm.clone()._audit is log
+
+
+def test_authenticate_records_audit(tmp_path):
+    """authenticate() must route the login POST through _request so it is audited."""
+    cfg = Config()
+    cfg.username = "root"
+    cfg.password = "toor"
+    cfg.verify_tls = False
+    log = AuditLogger(log_file=tmp_path / "a.jsonl")
+    sm = SessionManager(cfg, audit=log)
+    target = _make_target()
+    login_url = f"{target.url}/cgi-bin/luci/;stok=/login"
+
+    with requests_mock.Mocker() as m:
+        m.post(login_url, text="ok", status_code=200, cookies={"sysauth": "tok123abc"})
+        result = sm.authenticate(target)
+
+    log.close()
+
+    assert result is True
+    assert sm.is_authenticated is True
+    records = [
+        json.loads(line)
+        for line in (tmp_path / "a.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
+    assert any(rec["url"] == login_url for rec in records)

@@ -166,13 +166,7 @@ class SessionManager:
             "luci_password": self._config.password or "",
         }
         try:
-            resp = self._session.request(
-                "POST",
-                login_url,
-                data=payload,
-                timeout=self._config.timeout,
-                verify=self._config.verify_tls,
-            )
+            resp = self._request("POST", login_url, data=payload)
             if "sysauth" in resp.cookies:
                 self.auth_token = resp.cookies.get("sysauth")
                 self.is_authenticated = True
@@ -186,12 +180,7 @@ class SessionManager:
         """Best-effort logout — never raises."""
         try:
             logout_url = f"{target.url}/cgi-bin/luci/;stok=/logout"
-            self._session.request(
-                "GET",
-                logout_url,
-                timeout=self._config.timeout,
-                verify=self._config.verify_tls,
-            )
+            self._request("GET", logout_url)
         except Exception:
             pass
         finally:

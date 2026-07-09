@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "luci-redteam"
-version = "1.0.0"
+dynamic = ["version"]
 description = "Red team security scanning framework for LuCI/OpenWrt web interfaces"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -46,6 +46,10 @@ dev = [
 
 [project.scripts]
 luci-sky = "luci_sky.cli:cli"
+
+# Single source of truth for the project version: luci_sky/__init__.py::__version__
+[tool.setuptools.dynamic]
+version = {attr = "luci_sky.__version__"}
 
 [tool.setuptools.packages.find]
 where = ["."]

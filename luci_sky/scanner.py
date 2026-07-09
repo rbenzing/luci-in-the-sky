@@ -7,17 +7,18 @@ check dispatch via ThreadPoolExecutor, finding collection, and logout.
 from __future__ import annotations
 
 import logging
-import queue
 import threading
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import Callable, Dict, List, Optional
+from typing import Callable, List, Optional
 from urllib.parse import urlparse
 
 import sys as _sys
+
+import luci_sky
 from luci_sky.config import Config
-from luci_sky.models import Finding, Phase, ScanMode, ScanResult, Severity, Target
+from luci_sky.models import Finding, Phase, ScanResult, Target
 from luci_sky.session.http import SessionManager
 from luci_sky.checks import filtered_checks
 
@@ -204,7 +205,7 @@ class Scanner:
             target=target,
             findings=findings,
             scan_mode=config.mode,
-            tool_version="1.0.0",
+            tool_version=luci_sky.__version__,
             started_at=started_at,
             finished_at=finished_at,
             checks_run=checks_run,

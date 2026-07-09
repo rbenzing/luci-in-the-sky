@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -269,11 +269,12 @@ class TestCliListChecks:
 
 class TestCliVersion:
     def test_cli_version_shows_version_string(self):
-        """'version' command must display '1.0.0' in its output."""
+        """'version' command must display the current tool version in its output."""
+        import luci_sky
         runner = CliRunner()
         result = runner.invoke(cli, ["version"])
         assert result.exit_code == 0
-        assert "1.0.0" in result.output
+        assert luci_sky.__version__ in result.output
 
     def test_cli_version_shows_cve_count(self):
         """'version' command must display CVE database entry count."""

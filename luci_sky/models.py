@@ -1,7 +1,10 @@
 """
 luci_sky.models — all data shapes for the luci-redteam scanning framework.
 
-No I/O, no network calls, no internal package dependencies.
+No I/O and no network calls. The only internal dependency is a lazy read of the
+package version constant (``luci_sky.__version__``) used as the default
+``ScanResult.tool_version``; it is imported inside a factory to avoid any
+import-time coupling.
 """
 from __future__ import annotations
 
@@ -9,6 +12,12 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum, IntEnum
 from typing import Any, Dict, List, Optional
+
+
+def _default_tool_version() -> str:
+    """Return the running package version (single source of truth)."""
+    from luci_sky import __version__
+    return __version__
 
 
 class Severity(str, Enum):
@@ -171,7 +180,7 @@ class ScanResult:
     target: Target
     findings: List[Finding] = field(default_factory=list)
     scan_mode: ScanMode = ScanMode.PASSIVE
-    tool_version: str = "1.0.0"
+    tool_version: str = field(default_factory=_default_tool_version)
     started_at: Optional[datetime] = field(default_factory=datetime.utcnow)
     finished_at: Optional[datetime] = None
     checks_run: int = 0

@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 import types
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # Replace this module in sys.modules with a custom class that blocks attribute
 # access to forbidden submodule names, so that test_packaging.py:

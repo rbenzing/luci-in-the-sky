@@ -19,10 +19,10 @@ class TestPackageImportable:
         import luci_sky  # noqa: F401 — import is the assertion
 
     def test_version_attribute_present(self):
-        """luci_sky.__version__ must equal '1.0.0'."""
+        """luci_sky.__version__ must equal '1.1.0'."""
         import luci_sky
         assert hasattr(luci_sky, "__version__")
-        assert luci_sky.__version__ == "1.0.0"
+        assert luci_sky.__version__ == "1.1.0"
 
     def test_init_imports_nothing_else(self):
         """

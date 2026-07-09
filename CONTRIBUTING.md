@@ -37,6 +37,22 @@ Please include:
 - Notes about testing performed
 - Any security or compatibility considerations reviewers should know about
 
+## Versioning and Releases
+
+This project follows [Semantic Versioning](https://semver.org/) and keeps a
+[CHANGELOG.md](CHANGELOG.md).
+
+The version has a single source of truth: `__version__` in
+[luci_sky/__init__.py](luci_sky/__init__.py). `pyproject.toml` reads it from
+there dynamically, so there is nothing to keep in sync. To cut a release:
+
+1. Bump `__version__` in `luci_sky/__init__.py` (patch for fixes, minor for
+   backward-compatible features, major for breaking changes).
+2. Add a dated section to `CHANGELOG.md`.
+3. Run `pytest` and confirm the suite is green.
+4. Commit, then tag the release commit: `git tag -a vX.Y.Z -m "vX.Y.Z"` and
+   `git push origin vX.Y.Z`.
+
 ## Security-Related Contributions
 
 If your finding affects the safety of users, the correctness of vulnerability detection, or a potential vulnerability in the tool itself, please follow [SECURITY.md](SECURITY.md) instead of opening a detailed public issue first.

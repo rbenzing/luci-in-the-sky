@@ -351,7 +351,6 @@ def report(
 ) -> None:
     """Re-render a previously saved JSON scan result."""
     import json as _json
-    from luci_sky.models import ScanResult
 
     raw = Path(json_file).read_text(encoding="utf-8")
     data = _json.loads(raw)
@@ -435,7 +434,7 @@ def _build_result_from_dict(data: dict):
         target=target,
         findings=findings,
         scan_mode=ScanMode(data.get("scan_mode", "passive")),
-        tool_version=data.get("tool_version", "1.0.0"),
+        tool_version=data.get("tool_version", luci_sky.__version__),
         started_at=_parse_dt(data.get("started_at")),
         finished_at=_parse_dt(data.get("finished_at")),
         checks_run=data.get("checks_run", 0),

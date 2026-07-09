@@ -181,6 +181,9 @@ class Scanner:
                 for fut in as_completed(futures):
                     findings.extend(fut.result())
 
+        from luci_sky.dedup import merge_findings
+        findings = merge_findings(findings)
+
         # Sort findings: severity descending, then CVSS descending
         findings.sort(
             key=lambda f: (f.severity.numeric_rank, f.cvss_score),

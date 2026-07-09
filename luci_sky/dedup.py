@@ -27,25 +27,31 @@ def _rank(f: Finding) -> tuple:
 
 
 def merge_findings(findings: List[Finding]) -> List[Finding]:
-    """Merge findings sharing a CVE id (else normalized title) + affected URL."""
-    groups: Dict[Tuple[str, str], List[Finding]] = {}
-    order: List[Tuple[str, str]] = []
+    """Merge findings sharing a CVE id (else normalized title) + affected URL.
+
+    NOTE: the winning Finding in each multi-member group is mutated in place
+    (references/cve_ids/evidence/contributing_checks). Callers that need to keep
+    the originals should pass copies. Safe in the scanner, which builds findings
+    fresh per run and merges once before reporting.
+    """
+    groups: Dict[Tuple[str, str], List[Finding]] = {}   # key -> shared bucket
+    order: List[List[Finding]] = []                      # buckets, first-seen order
     for f in findings:
-        # A finding joins the first existing group any of its keys already map to.
-        chosen = None
-        for k in _keys(f):
+        keys = _keys(f)
+        bucket = None
+        for k in keys:
             if k in groups:
-                chosen = k
+                bucket = groups[k]
                 break
-        if chosen is None:
-            chosen = _keys(f)[0]
-            groups[chosen] = []
-            order.append(chosen)
-        groups[chosen].append(f)
+        if bucket is None:
+            bucket = []
+            order.append(bucket)
+        bucket.append(f)
+        for k in keys:                # alias ALL keys so any shared key merges
+            groups.setdefault(k, bucket)
 
     merged: List[Finding] = []
-    for k in order:
-        members = groups[k]
+    for members in order:
         if len(members) == 1:
             merged.append(members[0])
             continue

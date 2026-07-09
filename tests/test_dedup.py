@@ -38,3 +38,22 @@ def test_merge_keeps_distinct_urls_separate():
 
 def test_merge_empty_returns_empty():
     assert merge_findings([]) == []
+
+
+def test_merge_multi_cve_merges_on_shared_key_regardless_of_order():
+    def mk(check_id, cves):
+        f = _f(check_id, Severity.HIGH, url="https://h/x")
+        f.cve_ids = cves
+        return f
+    a = mk("a", ["CVE-A", "CVE-B"])
+    b = mk("b", ["CVE-B"])  # shares a's NON-first key
+    assert len(merge_findings([a, b])) == 1
+    assert len(merge_findings([b, a])) == 1
+
+
+def test_merge_groups_by_normalized_title_when_no_cve():
+    a = _f("a", Severity.HIGH, url="https://h/x", title="Weak  TLS")
+    b = _f("b", Severity.MEDIUM, url="https://h/x", title="weak tls")
+    merged = merge_findings([a, b])
+    assert len(merged) == 1
+    assert set(merged[0].contributing_checks) == {"a", "b"}

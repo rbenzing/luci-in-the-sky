@@ -57,6 +57,8 @@
        onclick="this.classList.toggle('open')">
     <strong>[{{ f.severity.value|upper }}]</strong> {{ f.title }}
     ({{ f.id }} — CVSS {{ f.cvss_score }}{% if f.contributing_checks %} — checks: {{ f.contributing_checks|join(', ') }}{% endif %})
+    <div>URL: {{ f.affected_url }}{% if f.cve_ids %} — CVEs: {{ f.cve_ids|join(', ') }}{% endif %}</div>
+    <p>{{ f.description }}</p>
     <div class="evidence">Evidence:
 {{ f.evidence }}
 

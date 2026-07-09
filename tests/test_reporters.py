@@ -456,3 +456,19 @@ def test_html_has_summary_and_filters(sample_scan_result, tmp_path):
     assert "Executive Summary" in html
     assert 'data-severity' in html            # filterable finding rows
     assert "filterBySeverity" in html          # inline filter script
+
+
+def test_html_shows_finding_details(sample_scan_result, tmp_path):
+    """The rendered HTML must include affected_url, description, and CVE ids for
+    findings, while remaining self-contained (no href=/src=/<link markers)."""
+    html = _render(sample_scan_result, tmp_path)
+    finding = sample_scan_result.findings[0]
+    assert finding.affected_url in html
+    assert finding.description in html
+    for cve in finding.cve_ids:
+        assert cve in html
+
+    lowered = html.lower()
+    assert "<link" not in lowered
+    assert "src=" not in lowered
+    assert "href=" not in lowered
